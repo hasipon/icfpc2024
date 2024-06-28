@@ -2,8 +2,6 @@ import {memo, useEffect, useState} from 'react'
 import {Grid, Input, MenuItem, Select, Slider, TextField} from "@mui/material";
 import axios from "axios";
 import './App.css'
-import {Simulate} from "react-dom/test-utils";
-import input = Simulate.input;
 
 const SvgContent = memo((props: {field: string, solution: string, time: number}) => {
     let t = props.time;
