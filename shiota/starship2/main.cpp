@@ -140,10 +140,43 @@ int main() {
     for(Int i = 1; i<100000; i++){
         distAndAccel.push_back(make_pair(i*i, i));
     }
-    auto vg = nearOrder(input());
-    vector<Int> v = solve(vg);
-    for(auto x: v){
-        cout << x;
+    vector<vector<Int>> anss;
+    auto vg = (input());
+    if(vg.size() <= 5000){
+        vector<pair<int, int> > no = nearOrder(vg);
+        anss.push_back(solve(no));
     }
+    {
+        vector<pair<int, int> > xo = vg;
+        sort(xo.begin(), xo.end());
+        anss.push_back(solve(xo));
+        reverse(xo.begin(), xo.end());
+        anss.push_back(solve(xo));
+    }
+    {
+        vector<pair<int, int> > yo = vg;
+        for(int i = 0; i<yo.size(); i++){
+            swap(yo[i].first, yo[i].second);
+        }
+        sort(yo.begin(), yo.end());
+        for(int i = 0; i<yo.size(); i++){
+            swap(yo[i].first, yo[i].second);
+        }
+        anss.push_back(solve(yo));
+        reverse(yo.begin(), yo.end());
+        anss.push_back(solve(yo));
+    }
+    Int miniAns = 1e9;
+    vector<Int> ans;
+    for(vector<Int> v : anss){
+        if(v.size() < miniAns){
+            miniAns = v.size();
+            ans = v;
+        }
+    }
+    for(Int i = 0; i<ans.size(); i++){
+        cout << ans[i];
+    }
+    cout <<endl;
     return 0;
 }
