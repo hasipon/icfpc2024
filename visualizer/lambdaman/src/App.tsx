@@ -98,7 +98,7 @@ function App() {
     const [time, setTime] = useState<number>(3);
 
     useEffect(() => {
-        setTime(Math.max(0, outputText.length - 1));
+        setTime(outputText.length);
     }, [outputText])
 
     useEffect(() => {
@@ -153,7 +153,7 @@ function App() {
                 return;
             }
 
-            setOutputText(resp.data);
+            setOutputText(resp.data.trim());
         };
 
         update();
@@ -215,7 +215,7 @@ function App() {
                 <Grid item m={1} xs={6}>
                     <Slider
                         value={time}
-                        max={outputText.length - 1}
+                        max={outputText.length}
                         onChange={(_e, newValue) => {
                             setTime(newValue as number);
                         }}
@@ -231,7 +231,7 @@ function App() {
                         inputProps={{
                             step: 1,
                             min: 0,
-                            max: outputText.length - 1,
+                            max: outputText.length,
                             type: 'number',
                             'aria-labelledby': 'input-slider',
                         }}
