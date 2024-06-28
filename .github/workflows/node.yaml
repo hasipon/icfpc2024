@@ -11,5 +11,5 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - name: pwd
-        run: pwd
+      - name: visualizer/lambdaman
+        run: cd visualizer/lambdaman && npm i && npm run build && sudo mv dist /var/www/html/lambdaman
