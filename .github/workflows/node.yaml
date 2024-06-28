@@ -1,0 +1,15 @@
+name: Node
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [instance2024-1-1]
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+      - name: visualizer/lambdaman
+        run: cd visualizer/lambdaman && npm i && npm run build && sudo rm -rf /var/www/html/lambdaman && sudo mv dist /var/www/html/lambdaman

@@ -1,0 +1,17 @@
+name: PullRepo
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [instance2024-1-1]
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            path: repo
+      - name: move repo
+        run: sudo rm -rf /var/www/html/repo && sudo mv repo /var/www/html/repo
