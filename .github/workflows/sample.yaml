@@ -1,0 +1,15 @@
+name: Sample
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [instance2024-1-1]
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v2
+      - name: pwd
+        run: pwd
+      - name: id
+        run: id
