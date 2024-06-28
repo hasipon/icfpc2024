@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+jinja2 = "*"
+flask = "*"
+werkzeug = "*"
+pillow = "*"
+sqlalchemy = "*"
+pymysql = "*"
+cors = "*"
+flask-cors = "*"
+drawsvg = {version = "~=2.0", extras = ["all"]}
+cairosvg = "*"
+
+[dev-packages]

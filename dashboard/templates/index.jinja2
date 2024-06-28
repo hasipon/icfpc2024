@@ -1,0 +1,88 @@
+{% extends "base.jinja2" %}
+{% block content %}
+    <div class="container-fluid">
+        <h2>問題一覧 ({{ problems|length }} 件)</h2>
+    {#
+        <dl>
+            <dt>Solved</dt>
+            <dd>{{ result_by_api.solved_problem_count }} / {{ problems|length }}</dd>
+            <dt>TotalCost</dt>
+            <dd>{{ result_by_api.total_cost }}</dd>
+        </dl>
+    #}
+        表示:
+        <a href="/">デフォルト</a>
+        <a href="/?sort-by=best_score">スコア低い順</a>
+        <a href="/?sort-by=best_score&desc=1">スコア高い順</a>
+        <a href="/?sort-by=diff_ideal_score">理論値との差低い順</a>
+        <a href="/?sort-by=diff_ideal_score&desc=1">理論値との差高い順</a>
+        <br>
+        <table class="table">
+            <tr>
+                <th class="text-center" scope="col">Problem</th>
+                <th class="text-center" scope="col">Image</th>
+                <th class="text-center" scope="col">Solution 1st</th>
+                <th class="text-center" scope="col">Solution 2nd</th>
+            </tr>
+
+            {% for p in problems.values() %}
+                <tr>
+                    <td class="text-center" id="{{ p.id }}">
+                        <a href="http://34.146.44.95/repo/problem.json/{{ p.id }}.json">{{ p.name }}</a> <br>
+                        <a href="/solutions/{{ p.id }}">回答一覧 ({{solutions[p.id] | length }} 件)</a><br>
+                        {% if p.heatmap_image_path  %}
+                            <a href={{ p.heatmap_image_path  }}>heatmap</a><br>
+                        {% endif %}
+                        <span style="font-weight: bold">理論値との差</span><br>
+                        {{ "%.2E" | format(p.diff_ideal_score) }} <br>
+                        <br>
+                        <span style="font-weight: bold">Room&Stage&Pillar</span><br>
+                        {{ p.room_width }} x {{ p.room_height }} <br>
+                        {{ p.stage_width }} x {{ p.stage_height }} {{ p.stage_bottom_left }}<br>
+                        {{ p.pillars_size }}<br>
+                        <br>
+                        <span style="font-weight: bold">Musicians&Attendees&Tastes</span><br>
+                        {{ p.musicians_size }}
+                        {{ p.attendees_size }}
+                        {{ p.tastes_size }}
+                        <br>
+                    </td>
+
+                    <td class="text-center">
+                        <span style="font-weight: bold">理論値</span><br>
+                        {{ "%.2E" | format(p.ideal_score) }} <br>
+                        <a href="{{ p.svg_path }}">
+                            <img width="300" height="300" src="{{ p.svg_path }}">
+                        </a>
+                    </td>
+
+                    <td class="text-center">
+                        {% if 0 < solutions[p.id] | length %}
+                            {{ solutions[p.id][0].name }}<br>
+                            {{ "%.2E" | format(solutions[p.id][0].score) }} <br>
+                            <a href="{{ solutions[p.id][0].svg_path }}">
+                                <img width="300" height="300" src="{{ solutions[p.id][0].svg_path }}">
+                            </a>
+                        {% else %}
+                            <p>No submission</p>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+                        {% if 1 < solutions[p.id] | length %}
+                            {{ solutions[p.id][1].name }}<br>
+                            {{ "%.2E" | format(solutions[p.id][1].score) }} <br>
+                            <a href="{{ solutions[p.id][1].svg_path }}">
+                                <img width="300" height="300" src="{{ solutions[p.id][1].svg_path }}">
+                            </a>
+                        {% else %}
+                            <p>No submission</p>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% endblock %}
+

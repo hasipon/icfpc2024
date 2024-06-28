@@ -1,0 +1,29 @@
+{% extends "base.jinja2" %}
+{% block content %}
+    <div class="container-fluid">
+        <h2> #{{ problem.id }} ({{ solutions|length }} 件)</h2>
+        <table class="table">
+            {% for s in solutions %}
+                {% if loop.index0 % 4 == 0 -%}
+                    <tr>
+                {% endif -%}
+
+            <td class="text-center" id="{{ s.name }}">
+                    <a href="{{ s.svg_path }}">
+                        <img width="300" height="300" src="{{ s.svg_path }}">
+                    </a>
+                <br>
+                <dl>
+                    <dt> <a href="http://34.146.44.95/repo/solutions/{{ s.name }}">{{ s.name }}</a></dt>
+                    <dt> {{ s.score }} </dt>
+                </dl>
+            </td>
+
+            {% if loop.index0 % 4 == 3 or loop.last -%}
+                </tr>
+            {% endif -%}
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
+
