@@ -10,6 +10,6 @@ jobs:
     runs-on: [instance2024-1-1]
     permissions: write-all
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: pwd
         run: pwd
