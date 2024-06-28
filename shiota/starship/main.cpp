@@ -6,10 +6,10 @@
 
 using namespace std;
 
-using Int = __int128;
+using Int = long long;
 
 const Int dx[] = {-1, 0,  1, -1, 0, 1, -1, 0, 1};
-const Int dy[] = {-1, -1,  -1, -0, 0, 0, 1, 1, 1};
+const Int dy[] = {-1, -1,  -1, 0, 0, 0, 1, 1, 1};
 
 class State{
 public:
@@ -20,7 +20,6 @@ public:
         if(px != rhs.px) return px < rhs.px;
         return py < rhs.py;
     }
-    vector<int> history;
 };
 
 Int gcd(Int a, Int b){
@@ -28,28 +27,33 @@ Int gcd(Int a, Int b){
     return gcd(b, a % b);
 }
 
-State dijkstra(int _sx, int _sy, int gx, int gy, int _vx, int _vy){
+pair<State, vector<int>> dijkstra(int _sx, int _sy, int gx, int gy, int _vx, int _vy){
     map<State, Int> minCost;
+    map<State, Int>  ope;
     priority_queue<pair<Int, State>> Q;
 
     minCost[State{_vx, _vy, _sx, _sy}] = 0;
     Q.push(make_pair(0, State{_vx, _vy, _sx, _sy}));
+    if(_sx == gx && _sy == gy) return make_pair(State(), vector<int>());
 
     while(!Q.empty()){
         Int cost = -Q.top().first;
-        State cur = Q.top().second;
+        const State cur = Q.top().second;
         Q.pop();
 
         for(Int i = 0; i < 9; i++){
             Int vx = cur.vx + dx[i];
             Int vy = cur.vy + dy[i];
 
+            if( abs(cur.px + cur.vx - gx) + abs(cur.py + cur.vy - gy) <
+                abs(cur.px + vx     - gx) + abs(cur.py + vy     - gy)){
+                continue;
+            }
+
             Int px = cur.px + vx;
             Int py = cur.py + vy;
             State next{vx, vy, px, py};
             Int nextCost = cost + 1;
-            next.history = cur.history;
-            next.history.push_back(i);
 
             /*
             Int div = gcd(fabs(cur.vx), fabs(cur.vy));
@@ -64,9 +68,23 @@ State dijkstra(int _sx, int _sy, int gx, int gy, int _vx, int _vy){
             }*/
 
             if(minCost.find(next) == minCost.end() || minCost[next] > nextCost){
-                minCost[next] = nextCost;
                 if(max(fabs(next.vx), fabs(next.vy)) > 2) continue;
-                if(next.px == gx && next.py == gy) return next;
+                minCost[next] = nextCost;
+                ope[next] = i;
+                if(next.px == gx && next.py == gy){
+                    vector<int> history;
+                    State ret = next;
+                    while(next.px != _sx || next.py != _sy || next.vx != _vx || next.vy != _vy){
+                        int cope = ope[next];
+                        history.push_back(cope);
+                        next.px -= next.vx;
+                        next.py -= next.vy;
+                        next.vx -= dx[cope];
+                        next.vy -= dy[cope];
+                    }
+                    reverse(history.begin(), history.end());
+                    return make_pair(ret, history);
+                }
                 Q.push(make_pair(-nextCost, next));
             }
         }
@@ -86,19 +104,20 @@ vector<pair<int, int>> input(){
 
 int main() {
     auto vg = input();
-    sort(vg.begin(), vg.end());
+    // sort(vg.begin(), vg.end());
     Int sx, sy;
     Int vx, vy;
     vx = vy = sx = sy = 0;
     for(Int i = 0; i < vg.size(); i++){
-        State result = dijkstra(sx, sy, vg[i].first, vg[i].second, vx, vy);
-        for(Int i = 0; i < result.history.size(); i++){
-            cout << result.history[i] + 1;
+        pair<State, vector<int>> result = dijkstra(sx, sy, vg[i].first, vg[i].second, vx, vy);
+        vector<int> history = result.second;
+        for(Int j = 0; j < history.size(); j++){
+            cout << history[j] + 1;
         }
-        vx = result.vx;
-        vy = result.vy;
-        sx = result.px;
-        sy = result.py;
+        vx = result.first.vx;
+        vy = result.first.vy;
+        sx = result.first.px;
+        sy = result.first.py;
     }
 
     return 0;
