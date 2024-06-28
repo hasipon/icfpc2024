@@ -5,7 +5,7 @@ import time
 print("start")
 tbl = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&\'()*+,-./:;<=>?@[\\]^_`|~ \n"
 for i in range(1, 22):
-    f = open("lambdaman/" + str(i) + "-shohei1.txt", "r")
+    f = open("lambdaman/" + str(i) + "-shohei2.txt", "r")
     line = f.readline()
     f.close()
     msg = "solve lambdaman" + str(i) + " " + line

@@ -10,7 +10,7 @@ use rand::Rng;
 use std::{fs};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    for i in 0..21 {
+    for i in 20..21 {
         println!("start: {}", i + 1);
         match solve(i + 1) 
         {
