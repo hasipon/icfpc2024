@@ -12,4 +12,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: visualizer/lambdaman
-        run: cd visualizer/lambdaman && npm i && npm run build && sudo rm -rf sudo mv /var/www/html/lambdaman && sudo mv dist /var/www/html/lambdaman
+        run: cd visualizer/lambdaman && npm i && npm run build && sudo rm -rf /var/www/html/lambdaman && sudo mv dist /var/www/html/lambdaman
