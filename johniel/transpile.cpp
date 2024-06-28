@@ -242,6 +242,7 @@ void eval(void)
 
 int main(int argc, char *argv[])
 {
+  cout << "(define-obsolete-function-alias \'string-to-int \'string-to-number \"22.1\")" << endl;
   cout << "(add-to-list \'load-path \"./site-lisp/bigint/\")" << endl;
   cout << "(add-to-list \'load-path \"./site-lisp/s\")" << endl;
   cout << "(require \'s)" << endl;
