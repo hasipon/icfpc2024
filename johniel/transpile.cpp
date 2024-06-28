@@ -39,7 +39,15 @@ str translate(str s)
 {
   str t;
   each (c, s) t += table.at(c - 33);
+  cerr << s << "->" << t << endl;
   return t;
+}
+
+str base94(str s)
+{
+  lli x = 0;
+  each (c, s) x = x * 94 + (c - 33);
+  return to_string(x);
 }
 
 map<str, int> var_pool;
@@ -100,19 +108,11 @@ vec<str> tokenize(str s)
   return v;
 }
 
-str base94(str s)
-{
-  reverse(s.begin(), s.end());
-  lli x = 0;
-  each (c, s) x = x * 94 + (c - 33);
-  return to_string(x);
-}
-
 queue<str> q;
 void eval(void)
 {
-  str indicator = q.front();
-  q.pop();
+  const str indicator = q.front(); q.pop();
+  if (q.size()) cerr << indicator << ' ' << q.front() << endl;
   if (0) {
   } else if (indicator == "T") {
     cout << "(T)";
@@ -120,24 +120,22 @@ void eval(void)
     cout << "(F)";
   } else if (indicator == "I") {
     str v = q.front(); q.pop();
-    cout << "(bigint-string-to-bigint \"" << base94(v) << "\")";
+    // cout << "(bigint-string-to-bigint \"" << base94(v) << "\")";
+    cout << base94(v) << "\n";
   } else if (indicator == "S") {
     str msg = q.front(); q.pop();
     str s;
     each (c, msg) {
       if (c == '\\') {
-        s += c;
-        s += c;
+        s += "\\";
         continue;
       }
       if (c == '\'') {
-        s += '\\';
-        s += c;
+        s += "\\\'";
         continue;
       }
       if (c == '\"') {
-        s += '\\';
-        s += c;
+        s += "\\\"";
         continue;
       }
       s += c;
@@ -152,39 +150,63 @@ void eval(void)
       cout << "(not "; eval(); cout << ")";
     }
     if (op == "#") { // string to int
-      cout << "(bigint-new 96 ";  eval(); cout << ")" << endl;
+      cout << "(string-to-int ";  eval(); cout << ")" << endl;
     }
     if (op == "$") {
-      cout << "(bigint-to-string ";  eval(); cout << ")" << endl;
+      // cout << "(bigint-to-string ";  eval(); cout << ")" << endl;
+      cout << "(number-to-string ";  eval(); cout << ")" << endl;
     }
   } else if (indicator == "B") {
     str op = q.front(); q.pop();
     if (op == "+") {
-      cout << "(bigint-add "; eval(); cout << " "; eval(); cout << ")";
+      // cout << "(bigint-add "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(+ "; eval(); cout << " "; eval(); cout << ")";
     }
     if (op == "-") {
-      cout << "(bigint-subtract "; eval(); cout << " "; eval(); cout << ")";
+      // cout << "(bigint-subtract "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(- "; eval(); cout << " "; eval(); cout << ")";
     }
     if (op == "*") {
       cout << "(* "; eval(); cout << " "; eval(); cout << ")";
     }
     if (op == "/") {
-      cout << "(bigint-divide "; eval(); cout << " "; eval(); cout << ")";
+      // cout << "(bigint-divide "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(/ "; eval(); cout << " "; eval(); cout << ")";
     }
     if (op == "%") {
-      cout << "(% "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(% ";
+      eval();
+      cout << " ";
+      eval();
+      cout << ")";
     }
     if (op == "<") {
-      cout << "(< "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(< ";
+      eval();
+      cout << " ";
+      eval();
+      cout << ")";
     }
     if (op == ">") {
-      cout << "(> "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(> ";
+      eval();
+      cout << " ";
+      eval();
+      cout << ")";
     }
     if (op == "=") {
-      cout << "(= "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(= ";
+      eval();
+      cout << " ";
+      eval();
+      cout << ")";
     }
     if (op == "|") {
-      cout << "(or "; eval(); cout << " "; eval(); cout << ")";
+      cout << "(or ";
+      eval();
+      cout << " ";
+      eval();
+      cout << ")";
     }
     if (op == "&") {
       cout << "(and ";
@@ -227,11 +249,15 @@ void eval(void)
     eval();
     cout << "\n";
     eval();
+    cout << "\n";
+    eval();
     cout << ")";
 
   } else if (indicator == "L") {
     str var = q.front(); q.pop();
-    cout << "(lambda (" << var << ") " << endl; eval(); cout << ")";
+    cout << "(lambda (" << var << ") " << endl;
+    eval();
+    cout << ")";
 
   } else if (indicator == "v") {
     str var = q.front(); q.pop();
@@ -239,6 +265,8 @@ void eval(void)
   }
   return ;
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -252,10 +280,31 @@ int main(int argc, char *argv[])
   cout << "(defmacro take (len s) (s-left  len s))" << endl;
   cout << "(defmacro drop (len s) (s-right len s))" << endl;
 
+  // str code = "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK";
+  str efficiency1 = "B$ L! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! B$ v! I\" L! B+ B+ v! v! B+ v! v!";
+  str efficiency2 = "B+ I7c B* B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B= v% I! I\" B+ I\" B$ v$ B- v% I\" I\":c1+0 I!";
+  str efficiency3 = "B+ I7c B* B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B= v% I! I\" B+ I\" B$ v$ B- v% I\" I\":c1+0 I\"";
 
-  str code = "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK";
-  vec<str> ts = tokenize(code);
-  each (t, ts) q.push(t);
-  eval();
+  str efficiency4 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B< v% I# I\" B+ B$ v$ B- v% I\" B$ v$ B- v% I# II";
+
+  str lambdaman10 = "B. SF B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I;Y S B. ? B= B% v# IS I! S~ S B. ? B= B% v# I, I! Sa Sl B$ v\" B+ v# I\" I\"";
+  str lambdaman6 = "B. SF B$ B$ L\" B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L# ? B= v# I\" v\" B. v\" B$ v$ B- v# I\" Sl I#,";
+  str lambdaman9 = "B$ L+ B. B. SF B$ B$ v+ Sl IR B$ B$ v+ B. S~ B$ B$ v+ Sl IS IR L\" B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L# ? B= v# I\" v\" B. v\" B$ v$ B- v# I\"";
+
+  str efficiency5 = "B$ L\' B$ L( B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B& B> v% I\"41= B& B$ v\' v% B$ v( B+ v% I\" v% B$ v$ B+ v% I\" I# B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B= v% I\" T ? B= B% v% I# I\" F B$ v$ B/ v% I# L& B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B= v% v& T ? B= B% v& v% I! F B$ v$ B+ v% I\" I#";
+
+  str efficiency6 = "B$ L\' B$ L( B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B& B> v% I? B$ v\' B$ v( v% v% B$ v$ B+ v% I\" I# B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B< v% I# I\" B+ B$ v$ B- v% I\" B$ v$ B- v% I# L& B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% ? B= v% v& T ? B= B% v& v% I! F B$ v$ B+ v% I\" I#";
+
+  str efficiency12 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L$ L% B$ B$ L\" L# ? B< v\" v# v\" v# v% B+ I\" ? B> v% I# B$ B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L& L' L( ? B= v' v% v( B$ B$ v& B+ v' I\" ? B> B$ v$ v' B- v' I\" ? B= B% v% v' I! B* B/ v( B$ v$ v' B- B$ v$ v' I\" v( v( I# v% v% I\"Ndb";
+
+  auto fn = [] (str code) {
+    vec<str> ts = tokenize(code);
+    cerr << ts << endl;
+    each (t, ts) q.push(t);
+    eval();
+    assert(q.empty());
+  };
+  fn(lambdaman10);
+
   return 0;
 }
