@@ -11,5 +11,5 @@ jobs:
     runs-on: [self-hosted]
 
     steps:
-      - name: Pull /var/www/repo
-        run: cd /var/www/repo && git pull
+      - name: Pull
+        run: cd /var/www/html/repo && git pull
