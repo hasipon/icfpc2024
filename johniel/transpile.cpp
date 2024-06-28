@@ -32,6 +32,10 @@ using ull = unsigned long long;
 using str = string;
 template<typename T> using vec = vector<T>;
 
+
+#include <boost/multiprecision/cpp_int.hpp>
+namespace mp = boost::multiprecision;
+
 std::ostream &operator<<(std::ostream &dest, __int128_t value) {
   std::ostream::sentry s(dest);
   if (s) {
@@ -85,9 +89,6 @@ str translate(str s)
   each (c, s) t += table.at(c - 33);
   return t;
 }
-
-#include <boost/multiprecision/cpp_int.hpp>
-namespace mp = boost::multiprecision;
 
 str base94(str s)
 {
