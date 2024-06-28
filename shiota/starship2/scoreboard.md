@@ -1,0 +1,3 @@
+| # | team | spaceship1 | spaceship2 | spaceship3 | spaceship4 | spaceship5 | spaceship6 | spaceship7 | spaceship8 | spaceship9 | spaceship10 | spaceship11 | spaceship12 | spaceship13 | spaceship14 | spaceship15 | spaceship16 | spaceship17 | spaceship18 | spaceship19 | spaceship20 | spaceship21 | spaceship22 | spaceship23 | spaceship24 | spaceship25 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **23** | **DiamondPrincess** | **1** | **1** | **1** | **23** | **4** | **29** | **10** | **10** | **29** | **26** | **1** | **** | **** | **22** | **31** | **28** | **27** | **18** | **24** | **26** | **26** | **18** | **** | **** | **** |
