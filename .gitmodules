@@ -1,0 +1,3 @@
+[submodule "johniel/johniel/site-lisp/s.el"]
+	path = johniel/johniel/site-lisp/s.el
+	url = git@github.com:magnars/s.el.git
