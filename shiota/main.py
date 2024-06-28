@@ -30,4 +30,4 @@ decode_ui = gr.Interface(
 
 gr.TabbedInterface(
     [encode_ui, decode_ui], ["encode", "decode"]
-).launch()
+).launch(server_port=8080, server_name='0.0.0.0')
