@@ -11,9 +11,9 @@ use std::{fs, mem, os::windows::process};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let id = "shohei3";
     let dirss = [
-        [Dir::R, Dir::D, Dir::U, Dir::L],
+        [Dir::L, Dir::R, Dir::D, Dir::U],
     ];
-    for i in 3..4 {
+    for i in 4..5 {
         let number = i + 1;
         let path = format!("../../../solutions/lambdaman/{}-{}.txt", number, id);
         fs::remove_file(path.clone());
@@ -108,7 +108,8 @@ fn solve(number:i64, output:String, dirs:&[Dir; 4]) -> Result<(), Box<dyn std::e
             }
         }
     }
-    
+
+    // 枝伸ばしフェーズ
     let mut current = problem.start.clone();
     let mut dir_current = 0;
     let mut history:Vec<usize> = Vec::new();
@@ -161,6 +162,66 @@ fn solve(number:i64, output:String, dirs:&[Dir; 4]) -> Result<(), Box<dyn std::e
             }
         }
     }
+    
+    // 枝つなぎフェーズ
+    loop {
+        let mut next_state = Vec::new();
+        for block in &state
+        {
+            if let Block::R(_, index, _) = block
+            {
+                next_state.push(Block::R(Vec::new(), *index, 0));
+            }
+            else 
+            {    
+                next_state.push(Block::Fill);
+            }
+        }
+
+        let mut current = problem.start.clone();
+        let mut skipping = Option::None;
+        loop {
+            let pos = problem.pos(&current);
+            if let Block::R(arrows, _, processed) = &state[pos]
+            {
+                if let Option::Some(skip_pos) = skipping
+                {
+                    if skip_pos == 0
+                    {
+                    }
+                }
+            }
+            if let Block::R(arrows, _, processed) = &mut state[pos]
+            {
+                if *processed < arrows.len()
+                {
+                    let arrow = arrows[arrows.len() - *processed - 1];
+                    let pair = arrow.to_pair();
+                    if let Option::None = skipping
+                    {
+                        if let Block::R(next_arrows, _, _) = &mut next_state[problem.pos(&current)]
+                        {
+                            next_arrows.insert(0, arrow);
+                        }
+                    }
+                    current = (current.0 + pair.0, current.1 + pair.1);
+                    *processed += 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        state = next_state;
+        break;
+    }
+
     // 回答作成フェーズ
     let mut current = problem.start.clone();
     loop {

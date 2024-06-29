@@ -9,11 +9,35 @@ use data::*;
 use std::{fs, mem, os::windows::process};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let id = "shohei3";
+    let id = "shohei5";
     let dirss = [
+        [Dir::L, Dir::R, Dir::D, Dir::U],
+        [Dir::L, Dir::R, Dir::U, Dir::D],
+        [Dir::L, Dir::D, Dir::R, Dir::U],
+        [Dir::L, Dir::D, Dir::U, Dir::R],
+        [Dir::L, Dir::U, Dir::R, Dir::D],
+        [Dir::L, Dir::U, Dir::D, Dir::R],
+        [Dir::R, Dir::L, Dir::D, Dir::U],
+        [Dir::R, Dir::L, Dir::U, Dir::D],
+        [Dir::R, Dir::D, Dir::L, Dir::U],
         [Dir::R, Dir::D, Dir::U, Dir::L],
+        [Dir::R, Dir::U, Dir::L, Dir::D],
+        [Dir::R, Dir::U, Dir::D, Dir::L],
+        [Dir::D, Dir::R, Dir::L, Dir::U],
+        [Dir::D, Dir::R, Dir::U, Dir::L],
+        [Dir::D, Dir::L, Dir::R, Dir::U],
+        [Dir::D, Dir::L, Dir::U, Dir::R],
+        [Dir::D, Dir::U, Dir::R, Dir::L],
+        [Dir::D, Dir::U, Dir::L, Dir::R],
+        [Dir::U, Dir::R, Dir::D, Dir::L],
+        [Dir::U, Dir::R, Dir::L, Dir::D],
+        [Dir::U, Dir::D, Dir::R, Dir::L],
+        [Dir::U, Dir::D, Dir::L, Dir::R],
+        [Dir::U, Dir::L, Dir::R, Dir::D],
+        [Dir::U, Dir::L, Dir::D, Dir::R],
+    
     ];
-    for i in 3..4 {
+    for i in 0..21 {
         let number = i + 1;
         let path = format!("../../../solutions/lambdaman/{}-{}.txt", number, id);
         fs::remove_file(path.clone());
@@ -90,21 +114,47 @@ fn solve(number:i64, output:String, dirs:&[Dir; 4]) -> Result<(), Box<dyn std::e
         mem::swap(&mut vec0, &mut vec1);
         vec1.clear();
     }
-    current = target;
-    state[problem.pos(&current)] = Block::R(vec![], d, 0);
-    for i in 0..d
-    {
-        let d2 = d - i - 1;
-        for dir in dirs
+    let mut current = problem.start.clone();
+    let mut dir_current = 0;
+    let mut history:Vec<usize> = Vec::new();
+    state[problem.pos(&current)] = Block::R(vec![], 0, 0);
+    'outside: loop {
+        if current == target { break; }
+        let dir = dirs[dir_current];
+        let next = dir.move_cursor(&current);
+        if problem.contains(&next) && state[problem.pos(&next)] == Block::Empty
         {
-            let next = dir.move_cursor(&current);
-            if !problem.contains(&next) { continue; }
-            let pos = problem.pos(&next);
-            if distance[pos] == d2
+            if let Block::R(arrows, index, processed) = &mut state[problem.pos(&current)]
             {
-                state[problem.pos(&next)] = Block::R(vec![dir.invert()], d2, 0);
+                arrows.insert(0, dir);
+                history.push(dir_current);
+                state[problem.pos(&next)] = Block::R(vec![], *index, 0);
                 current = next;
-                break;
+                dir_current = 0;
+            }
+            continue;
+        }
+        else 
+        {
+            dir_current += 1;
+            while dir_current >= 4
+            {
+                if let Option::Some(last) =  history.pop()
+                {
+                    dir_current = last;
+                    let dir = dirs[dir_current];
+                    let pair = dir.to_pair();
+                    if let Block::R(arrows, index, processed) = &mut state[problem.pos(&current)]
+                    {
+                        arrows.insert(0, dir.invert());
+                    }
+                    current = (current.0 - pair.0, current.1 - pair.1);
+                    dir_current += 1;
+                }
+                else 
+                {
+                    break 'outside;
+                }
             }
         }
     }
@@ -141,11 +191,12 @@ fn solve(number:i64, output:String, dirs:&[Dir; 4]) -> Result<(), Box<dyn std::e
                 }
                 else 
                 {
-                    if let Block::R(arrows, index, processed) = &state[(current.0 + current.1 * problem.width) as usize]
+                    if let Block::R(arrows, index, processed) = &mut state[(current.0 + current.1 * problem.width) as usize]
                     {
                         if arrows.len() > 0
                         {
-                            current = arrows[0].move_cursor(&current);
+                            current = arrows[*processed].move_cursor(&current);
+                            *processed += 1;
                             dir_current = 0;
                         }
                         else 
@@ -159,6 +210,15 @@ fn solve(number:i64, output:String, dirs:&[Dir; 4]) -> Result<(), Box<dyn std::e
                     }
                 }
             }
+        }
+    }
+    
+    // 進行状況を戻す
+    for block in &mut state
+    {
+        if let Block::R(_, _, processed) = block
+        {
+            *processed = 0;
         }
     }
     // 回答作成フェーズ
