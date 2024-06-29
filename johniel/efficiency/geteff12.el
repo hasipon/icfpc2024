@@ -19,7 +19,7 @@
                                         (funcall var1 var1)))))
                   (lambda (var2)
                     (lambda (var3)
-                      (funcall (funcall (lambda (var0) ;; min
+                      (funcall (funcall (lambda (var0)
                                           (lambda (var1)
                                             (if (< var0 var1)
                                                 var0

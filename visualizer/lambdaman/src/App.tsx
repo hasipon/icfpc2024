@@ -37,8 +37,7 @@ const SvgContent = memo((props: {field: string, solution: string, time: number})
         if (c === "D") ny++;
         if (0 <= nx && nx < W && 0 <= ny && ny < H) {
             if (stage[ny][nx] === "#") {
-                // TODO: print error
-                break;
+                continue;
             }
 
             if (stage[ny][nx] === ".") {
@@ -47,9 +46,6 @@ const SvgContent = memo((props: {field: string, solution: string, time: number})
 
             lx = nx;
             ly = ny;
-        } else {
-            // TODO: print error
-            break;
         }
     }
 
