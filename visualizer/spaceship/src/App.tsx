@@ -78,7 +78,9 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
                 targets.delete(`${xx}_${yy}`);
             }
         } else if (vx !== 0 && vy !== 0) {
-            const gcd = (x:number, y:number) => x % y ? gcd(y, x % y) : y;
+            const gcd = (x:number, y:number): number => {
+                return x % y ? gcd(y, x % y) : y;
+            };
             const num_p = gcd(Math.abs(vx), Math.abs(vy));
             for (let dt = 0; dt < num_p; dt++) {
                 const xx = px - vx * (dt + 1) / num_p;
@@ -173,12 +175,18 @@ function App() {
             }
 
             const s = solutionList[selectedSolution];
-            const resp = await axios.get<string>("http://34.146.140.6/repo/solutions/lambdaman/" + s);
+            const resp = await axios.get<string>("http://34.146.140.6/repo/solutions/spaceship/" + s, {
+                responseType: "text"
+            });
+
             if (resp.status !== 200) {
                 return;
             }
 
-            setOutputText(resp.data.trim());
+            if (resp.data) {
+                console.log(resp.data);
+                setOutputText(resp.data.trim());
+            }
         };
 
         update();
