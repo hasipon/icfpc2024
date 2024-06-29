@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cassert>
+#include <cmath>
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <queue>
@@ -281,9 +283,9 @@ void updateAnss(vector<vector<Int>> &anss, const vector<Int> &ans, int &nowBest)
         anss.push_back(ans);
         nowBest = ans.size();
         for(Int i = 0; i<ans.size(); i++){
-            cerr << ans[i];
+            cout << ans[i];
         }
-        cerr << endl;
+        cout << endl;
     }
 }
 
@@ -350,11 +352,11 @@ int main() {
         if(v.size() < miniAns){
             miniAns = v.size();
             ans = v;
-            for(Int i = 0; i<ans.size(); i++){
-                cout << ans[i];
-            }
-            cout <<endl;
         }
     }
+    for(Int i = 0; i<ans.size(); i++){
+        cout << ans[i];
+    }
+    cout <<endl;
     return 0;
 }
