@@ -257,10 +257,10 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
         int cnt =0;
         for(int j = max(i-500, 0); j<vg.size(); j++){
             cnt++;
-            if(lastId != -1 && cnt > 500) break;
+            if(lastId != -1 && cnt > 1000) break;
             if(used[j]) continue;
-            int dist = max(trip_hist_by_dist(vg[j].first - xs, 0,0).size(),
-                        trip_hist_by_dist(vg[j].second - ys, 0, 0).size());
+            int dist = trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() +
+                        trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size();
             if(dist < minDist){
                 minDist = dist;
                 select = j;
@@ -385,7 +385,10 @@ int main() {
     }
     Int miniAns = 1e9;
     vector<Int> ans;
+    int id = 0;
     for(vector<Int> v : anss){
+        cerr << "id: " << id << " size: " << v.size() << endl;
+        id++;
         if(v.empty()) continue;
         if(v.size() < miniAns){
             miniAns = v.size();
