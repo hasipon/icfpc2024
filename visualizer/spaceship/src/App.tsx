@@ -30,34 +30,28 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         return;
     }
 
-    // let px = 0, py = 0;
-    /*
+    let px = 0, py = 0;
+    let vx = 0, vy = 0;
+    const visited = new Set(["0_0"]);
     for (let i = 0; i < Math.min(props.solution.length, t); i++) {
         const c = props.solution[i];
-        let nx = lx;
-        let ny = ly;
-        if (c === "L") nx--;
-        if (c === "R") nx++;
-        if (c === "U") ny--;
-        if (c === "D") ny++;
-        if (0 <= nx && nx < W && 0 <= ny && ny < H) {
-            if (stage[ny][nx] === "#") {
-                // TODO: print error
-                break;
-            }
+        let ax = 0;
+        let ay = 0;
+        if (c === "1") { ax--; ay--; }
+        if (c === "2") { ay--; }
+        if (c === "3") { ax++; ay--; }
+        if (c === "4") { ax--; }
+        if (c === "6") { ax++}
+        if (c === "7") { ax--; ay++; }
+        if (c === "8") { ay++; }
+        if (c === "9") { ax++; ay++; }
 
-            if (stage[ny][nx] === ".") {
-                stage[ny][nx] = " ";
-            }
-
-            lx = nx;
-            ly = ny;
-        } else {
-            // TODO: print error
-            break;
-        }
+        vx += ax;
+        vy += ay;
+        px += vx;
+        py += vy;
+        visited.add("" + px + "_" + py);
     }
-     */
 
     const svgChildren = [];
     const r = 1 + Math.max(W,H) / 512;
@@ -69,20 +63,24 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
         const y = stage[i][1];
-        const cx = x;
-        const cy = y;
-        svgChildren.push( <rect key={"rect_" + i} x={cx} y={cy} width={r} height={r} fill={"#444444"}></rect> );
+        if (!visited.has("" + x + "_" + y)) {
+            const cx = x;
+            const cy = y;
+            svgChildren.push( <rect key={"rect_" + i} x={cx} y={cy} width={r} height={r} fill={"#444444"}></rect> );
+        }
     }
+
+    svgChildren.push( <rect key={"rect_p"} x={px} y={py} width={r} height={r} fill={"#AA0000"}></rect> );
 
     return <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W+r) + " " + (H+r)} id="game">{svgChildren}</svg>
 });
 
 function App() {
-    const [problemNo, setProblemNo] = useState<number>(1);
+    const [problemNo, setProblemNo] = useState<number>(2);
     const [solutionList, setSolutionList] = useState<string[]>([]);
     const [selectedSolution, setSelectedSolution] = useState<number>(0);
     const [inputText, setInputText] = useState<string>("###.#...\n" + "...L..##\n" + ".#######");
-    const [outputText, setOutputText] = useState<string>("");
+    const [outputText, setOutputText] = useState<string>("84996111319999641117429276662745436996911191355654363762549151777789912262165515554373735559191");
     const [time, setTime] = useState<number>(3);
 
     useEffect(() => {
