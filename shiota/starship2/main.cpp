@@ -69,12 +69,6 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int gx, int gy, int _vx, int
             Int vx = cur.vx + dx[i];
             Int vy = cur.vy + dy[i];
 
-            // 嘘かも。高速化
-            if(abs(cur.px + cur.vx - gx) + abs(cur.py + cur.vy - gy) <
-               abs(cur.px + vx     - gx) + abs(cur.py + vy     - gy)){
-               continue;
-            }//*/
-
             Int px = cur.px + vx;
             Int py = cur.py + vy;
             State next{vx, vy, px, py};
@@ -95,7 +89,6 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int gx, int gy, int _vx, int
             }*/
 
             if(minCost.find(next) == minCost.end() || minCost[next] > nextCost){
-                if(max(fabs(next.vx), fabs(next.vy)) > 4) continue;
                 minCost[next] = nextCost;
                 ope[next] = i+1;
                 if(next.px == gx && next.py == gy){
@@ -257,8 +250,8 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
         int select = -1;
         for(int j = 0; j<vg.size(); j++){
             if(used[j]) continue;
-            // int dist = trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() +
-            // trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size();
+            // int dist = max(trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() ,
+            // trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size());
             int dist = abs(vg[j].first - xs) +
                        abs(vg[j].second - ys );
             if(dist < minDist){

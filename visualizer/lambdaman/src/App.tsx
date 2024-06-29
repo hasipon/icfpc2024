@@ -9,7 +9,7 @@ const SvgContent = memo((props: {field: string, solution: string, time: number})
         t = 0;
     }
 
-    const stage = props.field.split(/\r?\n/).map(line => line.split(""));
+    const stage = props.field.trim().split(/\r?\n/).map(line => line.split(""));
     const H = stage.length;
     const W = 0 < H ? stage[0].length : 0;
     if (W <= 0 || H <= 0) {
@@ -27,7 +27,7 @@ const SvgContent = memo((props: {field: string, solution: string, time: number})
         }
     }
 
-    for (let i = 0; i < Math.min(props.solution.length, t); i++) {
+    for (let i = 0; i < Math.min(props.solution.trim().length, t); i++) {
         const c = props.solution[i];
         let nx = lx;
         let ny = ly;
@@ -53,9 +53,7 @@ const SvgContent = memo((props: {field: string, solution: string, time: number})
     const scale = 800 / Math.max(W, H);
     const pad = 0;
 
-    svgChildren.push(
-        <rect key={"rect_stage"} x={0} y={0} width={scale * W} height={scale * H} fillOpacity={1} strokeWidth={0} stroke={"#555555"}></rect>
-    );
+    svgChildren.push( <rect key={"rect_stage"} x={0} y={0} width={scale * W} height={scale * H} fillOpacity={1} fill={"black"}></rect> );
 
     for (let y = 0; y < stage.length; y++) {
         for (let x = 0; x < stage[y].length; x++) {
