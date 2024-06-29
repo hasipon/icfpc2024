@@ -19,7 +19,8 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     }
 
     const targets = new Set();
-    let min_x = -10, max_x = -10, min_y = 10, max_y = 10;
+    let min_x = -10, max_x = 10;
+    let min_y = -10, max_y = 10;
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
         const y = stage[i][1];
@@ -29,7 +30,6 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         max_y = Math.max(max_y, y);
         targets.add(`${x}_${y}`);
     }
-
     const W = max_x - min_x;
     const H = max_y - min_y;
 
@@ -43,11 +43,12 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     let px = 0, py = 0;
     let vx = 0, vy = 0;
+    let ax = 0, ay = 0;
 
     for (let i = 0; i < Math.min(props.solution.length, t); i++) {
         const c = props.solution[i];
-        let ax = 0;
-        let ay = 0;
+        ax = 0;
+        ay = 0;
         if (c === "1") { ax--; ay--; }
         if (c === "2") { ay--; }
         if (c === "3") { ax++; ay--; }
@@ -108,15 +109,18 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         }
     }
 
-    console.log(px);
     svgChildren.push(
         <rect key={"rect_p"} x={px} y={flip_y(py)} width={r} height={r} fill={"#CC0000"}></rect>
     );
 
-    return <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W+r) + " " + (H+r)} id="game">{svgChildren}</svg>
+    return <>
+        <p>p={px},{py} v={vx},{vy} a={ax},{ay}</p>
+        <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W + r) + " " + (H + r)}
+             id="game">{svgChildren}</svg>
+    </>
 });
 
-type Solution  = {
+type Solution = {
     fileName: string;
     size: number;
 }

@@ -276,9 +276,9 @@ void updateAnss(vector<vector<Int>> &anss, const vector<Int> &ans, int &nowBest)
         anss.push_back(ans);
         nowBest = ans.size();
         for(Int i = 0; i<ans.size(); i++){
-            cout << ans[i];
+            cerr << ans[i];
         }
-        cout << endl;
+        cerr << endl;
     }
 }
 
