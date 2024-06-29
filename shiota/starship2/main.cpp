@@ -250,14 +250,10 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
     for(int i = 0; i<vg.size(); i++){
         used[i] = false;
     }
-    int lastId = -1;
     for(int i =0 ; i<vg.size(); i++){
         int minDist = 1e9;
         int select = -1;
-        int cnt =0;
-        for(int j = max(i-500, 0); j<vg.size(); j++){
-            cnt++;
-            if(lastId != -1 && cnt > 1000) break;
+        for(int j = 0; j<vg.size(); j++){
             if(used[j]) continue;
             // int dist = trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() +
             // trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size();
@@ -270,7 +266,6 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
         }
         ret.push_back(vg[select]);
         used[select] = true;
-        lastId = select;
         xs = vg[select].first;
         ys = vg[select].second;
     }
@@ -280,6 +275,18 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
     return ret;
 }
 
+void updateAnss(vector<vector<Int>> &anss, const vector<Int> &ans, int &nowBest){
+    if(ans.empty()) return;
+    if(ans.size() < nowBest){
+        anss.push_back(ans);
+        nowBest = ans.size();
+        for(Int i = 0; i<ans.size(); i++){
+            cerr << ans[i];
+        }
+        cerr << endl;
+    }
+}
+
 int main() {
     for(Int i = 1; i<1000; i++){
         distAndAccel.push_back(make_pair(i*i, i));
@@ -287,50 +294,24 @@ int main() {
     vector<vector<Int>> anss;
     int nowBest = 1000001;
     auto vg = (input());
+
+    // x_order
     {
         vector<pair<int, int> > xo = vg;
         sort(xo.begin(), xo.end());
-        anss.push_back(solve(xo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
-        anss.push_back(solveDijskstra(xo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
         {
             vector<pair<int, int> > no = nearOrder(xo);
             if(!no.empty()){
-                anss.push_back(solve(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
-                anss.push_back(solveDijskstra(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
+                updateAnss(anss, solve(no, nowBest), nowBest);
+                updateAnss(anss, solveDijskstra(no, nowBest), nowBest);
             }
         }
         reverse(xo.begin(), xo.end());
-        anss.push_back(solve(xo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
-        anss.push_back(solveDijskstra(xo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
         {
             vector<pair<int, int> > no = nearOrder(xo);
             if(!no.empty()) {
-                anss.push_back(solve(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
-                anss.push_back(solveDijskstra(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
+                updateAnss(anss, solve(no, nowBest), nowBest);
+                updateAnss(anss, solveDijskstra(no, nowBest), nowBest);
             }
         }
     }
@@ -343,47 +324,19 @@ int main() {
         for(int i = 0; i<yo.size(); i++){
             swap(yo[i].first, yo[i].second);
         }
-        anss.push_back(solve(yo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
-        anss.push_back(solveDijskstra(yo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
         {
             vector<pair<int, int> > no = nearOrder(yo);
             if(!no.empty()) {
-                anss.push_back(solve(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
-                anss.push_back(solveDijskstra(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
+                updateAnss(anss, solve(no, nowBest), nowBest);
+                updateAnss(anss, solveDijskstra(no, nowBest), nowBest);
             }
         }
         reverse(yo.begin(), yo.end());
-        anss.push_back(solve(yo,nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
-        anss.push_back(solveDijskstra(yo, nowBest));
-        if(!anss.back().empty()){
-            nowBest = min(nowBest, (int)anss.back().size());
-        }
         {
             vector<pair<int, int> > no = nearOrder(yo);
             if(!no.empty()) {
-                anss.push_back(solve(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
-                anss.push_back(solveDijskstra(no, nowBest));
-                if(!anss.back().empty()){
-                    nowBest = min(nowBest, (int)anss.back().size());
-                }
+                updateAnss(anss, solve(no, nowBest), nowBest);
+                updateAnss(anss, solveDijskstra(no, nowBest), nowBest);
             }
         }
     }
@@ -397,11 +350,11 @@ int main() {
         if(v.size() < miniAns){
             miniAns = v.size();
             ans = v;
+            for(Int i = 0; i<ans.size(); i++){
+                cout << ans[i];
+            }
+            cout <<endl;
         }
     }
-    for(Int i = 0; i<ans.size(); i++){
-        cout << ans[i];
-    }
-    cout <<endl;
     return 0;
 }
