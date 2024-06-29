@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include <fstream>
 #include <stack>
 #include <queue>
@@ -32,7 +33,7 @@ public:
                 const int nx = lx + dx[r];
                 const int ny = ly + dy[r];
                 if (inside(nx, ny) && input[ny][nx] != '#') {
-                    const int len = solve(ans + dirs[r]).size();
+                    const int len = playout(nx, ny, dot_count, got);
                     if (len < best_len) {
                         best_r = r;
                         best_len = len;
@@ -53,34 +54,20 @@ public:
         return ans;
     }
 
-    string solve(string half_ans) {
-        auto [lx, ly, dot_count] = preprocess(input);
-        vector got(H, vector<bool>(W));
-
-        int last_r = 0;
-        for (int turn = 0; turn < half_ans.size(); turn++) {
-            int r = dirs.find(half_ans[turn]);
-            lx += dx[r];
-            ly += dy[r];
-
-            if (input[ly][lx] == '.' && !got[ly][lx]) {
-                dot_count--;
-                got[ly][lx] = true;
-            }
-            last_r = r;
+    int playout(int lx, int ly, int dot_count, vector<vector<bool>> got) {
+        int ans_len = 0;
+        if (input[ly][lx] == '.' && !got[ly][lx]) {
+            dot_count--;
+            got[ly][lx] = true;
         }
-
-        string ans = half_ans;
-        for (int t = 0; t < dot_count; t++) {
-            vector visit(H, vector<int>(W));
-            queue<tuple<int, int, string> > Q;
-            // cerr << "lambda (x, y) = " << lx << " " << ly << " " << ans << endl;
-            Q.emplace(lx, ly, "");
-
+        while (dot_count) {
+            set<tuple<int, int> > mark;
+            queue<tuple<int, int, int> > Q;
+            Q.emplace(lx, ly, 0);
+            bool found = false;
             while (!Q.empty()) {
-                auto [px, py, moves] = Q.front();
+                auto [px, py, depth] = Q.front();
                 Q.pop();
-                bool found = false;
 
                 for (int r = 0; r < 4; r++) {
                     const int nx = px + dx[r];
@@ -89,16 +76,17 @@ public:
                         if (input[ny][nx] == '.' && !got[ny][nx]) {
                             lx = nx;
                             ly = ny;
-                            ans += moves + dirs[r];
                             got[ny][nx] = true;
+                            ans_len += depth + 1;
+                            dot_count--;
                             found = true;
                             break;
                         }
 
                         if (input[ny][nx] != '#') {
-                            if (!visit[ny][nx]) {
-                                visit[ny][nx] = 1;
-                                Q.emplace(nx, ny, moves + dirs[r]);
+                            if (mark.find({nx,ny}) == mark.end()) {
+                                mark.emplace(nx, ny);
+                                Q.emplace(nx, ny, depth + 1);
                             }
                         }
                     }
@@ -108,7 +96,7 @@ public:
             }
         }
 
-        return ans;
+        return ans_len;
     }
 
     tuple<int, int, int> preprocess(const vector<string> &input) {
