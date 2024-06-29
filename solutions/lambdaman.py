@@ -1,3 +1,4 @@
+
 import sys
 import requests
 import time
@@ -12,37 +13,175 @@ def convint(n):
 		n //= 94
 	return r
 
-for i in range(1, 22):
+for i in range(4, 22):
+    header = "solve lambdaman" + str(i) + " "
     min = ""
-    
+    min_file = ""
+    min_method = ""
     for file in glob.glob('lambdaman/' + str(i) + '-*.txt'):
         f = open(file, "r")
         line = f.readline()
         f.close()
-        if min == "" or len(line) < len(min):
-            min = line
-            min_file = file
+        line = line.replace("\n", "").replace("\r", "")
+        
+        def update(msg, method):            
+            global min
+            global min_file
+            global min_method
+            if min == "" or len(msg) < len(min):
+                min = msg
+                min_method = method
+                min_file = file
+
+        update("S" + ''.join(chr(tbl.index(x)+33) for x in (header + line)), "生データ")
+        #1文字モード
+        enc = 0
+        if line[0] != 'R': 
+            data = ['R', 'D', 'L', 'U']
+            keys = "L>FO"
+        else:
+            data = ['D', 'R', 'L', 'U']
+            keys = ">LFO"
+
+        for c in line:
+            enc *= 4
+            enc += data.index(c)
+            
+        data = convint(enc)
+        msg = '''B. S''' + ''.join(chr(tbl.index(x)+33) for x in header) + ''' B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I" BD B% vd I% S''' +  keys + ''' S I''' + data
+        update(
+            msg,
+            "1文字圧縮"
+        )
+
+        # 2文字モード    
+        if line[0] != 'R': 
+            data = ['R', 'D', 'L', 'U']
+            keys = "LL>>FFOO"
+        else:
+            data = ['D', 'R', 'L', 'U']
+            keys = ">>LLFFOO"
+        
+        enc = 0
+        i = 0
+        valid = True
+        for c in line:
+            if i % 2 == 1:
+                if prev != c:
+                    valid = False
+                    break
+                enc *= 4
+                enc += data.index(c)
+            i += 1
+            prev = c
+                
+        if valid:
+            data = convint(enc)
+            msg = '''B. S''' + ''.join(chr(tbl.index(x)+33) for x in header) + ''' B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I# BD B* I# B% vd I% S''' +  keys + ''' S I''' + data
+            update(
+                msg,
+                "2文字圧縮"
+            )
+
+        #ランレングス圧縮
+        if valid:
+            for max in [2, 3, 4, 5]:
+                enc = 0
+                if line[0] != 'R': 
+                    data = ['R', 'D', 'L', 'U']
+                    target = ['L', '>', 'F', 'O']
+
+                else:
+                    data = ['D', 'R', 'L', 'U']
+                    target = ['>', 'L', 'F', 'O']
+
+                keys = ""
+                for c in target:
+                    for _ in range(0, max):
+                        keys += c + c
+
+                rank = 2 ** (max - 1)
+                i = 0
+                while i < len(line):
+                    repeat = 0
+                    c = line[i]
+                    i += 1
+                    for _ in range(0, max - 1):
+                        if i < len(line) and c == line[i]:
+                            repeat += 1
+                            i += 1
+                        else:
+                            break
+
+                    enc *= 4 * rank
+                    enc += data.index(c) + repeat * 4
+
+                msg = '''B. S{header} B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I{mod_full} BT B+ B% B/ vd I% I{mod_len} I" BD B* B% vd I% I{len} S{keys} S I{data}'''
+                msg = msg.format(
+                    header = ''.join(chr(tbl.index(x)+33) for x in header),
+                    mod_full = convint(4 * rank),
+                    mod_len = convint(rank),
+                    len = convint(max),
+                    data = convint(enc),
+                    keys = keys
+                )
+                update(
+                    msg,
+                    "2文字ランレングス圧縮" + str(max)
+                )
+                print("2文字ランレングス圧縮" + str(max) + ":" + str(len(msg)))
+        else:
+            for max in [2, 3, 4, 5]:
+                enc = 0
+                if line[0] != 'R': 
+                    data = ['R', 'D', 'L', 'U']
+                    target = ['L', '>', 'F', 'O']
+
+                else:
+                    data = ['D', 'R', 'L', 'U']
+                    target = ['>', 'L', 'F', 'O']
+
+                keys = ""
+                for c in target:
+                    for _ in range(0, max):
+                        keys += c
+
+                rank = 2 ** (max - 1)
+                i = 0
+                while i < len(line):
+                    repeat = 0
+                    c = line[i]
+                    i += 1
+                    for _ in range(0, max - 1):
+                        if i < len(line) and c == line[i]:
+                            repeat += 1
+                            i += 1
+                        else:
+                            break
+
+                    enc *= 4 * rank
+                    enc += data.index(c) + repeat * 4
+
+                msg = '''B. S{header} B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I{mod_full} BT B+ B% B/ vd I% I{mod_len} I" BD B* B% vd I% I{len} S{keys} S I{data}'''
+                msg = msg.format(
+                    header = ''.join(chr(tbl.index(x)+33) for x in header),
+                    mod_full = convint(4 * rank),
+                    mod_len = convint(rank),
+                    len = convint(max),
+                    data = convint(enc),
+                    keys = keys
+                )
+                update(
+                    msg,
+                    "ランレングス圧縮" + str(max)
+                )
+                print("ランレングス圧縮" + str(max) + ":" + str(len(msg)))
+
 
     print(min_file)
-    line = min
-    header = "solve lambdaman" + str(i) + " "
-    enc = 0
-    for c in line[::-1]:
-        enc *= 4
-        if c == 'R':
-            enc += 0
-        elif c == 'D':
-            enc += 1
-        elif c == 'L':
-            enc += 2
-        elif c == 'U':
-            enc += 3
-    data = convint(enc)
-    length = convint(len(line) - 1)
-    msg = '''B. S''' + ''.join(chr(tbl.index(x)+33) for x in header) + ''' B$ B$ B$ Lf B$ Lx B$ vx vx Lp Ln B$ B$ vf B$ vp vp vn Lr Ld Ln B. B$ Lm ? B= vm I! SL ? B= vm I" S> ? B= vm I# SF SO B% vd I% ? B> vn I! B$ B$ vr B/ vd I% B- vn I" S I''' + data + " I" + length
-
-    print(msg)
-    res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=msg)
+    print(min_method)
+    print(min)
+    res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=min)
     assert res.ok
     result = ''.join(tbl[ord(x)-33] for x in res.text[1:])
     print(str(i) + "\n" + result)
