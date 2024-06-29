@@ -89,9 +89,14 @@ const SvgContent = memo((props: {field: string, solution: string, time: number})
     return <svg width="800" height="800" viewBox="0 0 800 800" id="game">{svgChildren}</svg>
 });
 
+type Solution  = {
+    fileName: string;
+    size: number;
+}
+
 function App() {
     const [problemNo, setProblemNo] = useState<number>(1);
-    const [solutionList, setSolutionList] = useState<string[]>([]);
+    const [solutionList, setSolutionList] = useState<Solution[]>([]);
     const [selectedSolution, setSelectedSolution] = useState<number>(0);
     const [inputText, setInputText] = useState<string>("###.#...\n" + "...L..##\n" + ".#######");
     const [outputText, setOutputText] = useState<string>("");
@@ -122,15 +127,16 @@ function App() {
                 return;
             }
 
-            const regex = /<a href="([^"]+)"/g;
+            const regex = /<a href="([^"]+)".* (\d+)/g;
             const matches = resp.data.matchAll(regex);
-            const list = ["None"];
+            const list :Solution[] = [{fileName: "None", size:0}];
             for (const match of matches) {
                 if (match[1].startsWith("" + problemNo + "-")) {
-                    list.push(match[1]);
+                    list.push({fileName: match[1], size:Number(match[2])} as Solution);
                 }
             }
 
+            list.sort((a, b) => a.size - b.size);
             setSolutionList(list);
         };
 
@@ -148,7 +154,7 @@ function App() {
             }
 
             const s = solutionList[selectedSolution];
-            const resp = await axios.get<string>("http://34.146.140.6/repo/solutions/lambdaman/" + s);
+            const resp = await axios.get<string>("http://34.146.140.6/repo/solutions/lambdaman/" + s.fileName);
             if (resp.status !== 200) {
                 return;
             }
@@ -183,7 +189,7 @@ function App() {
                             setSelectedSolution(v);
                         }}
                     >
-                        {solutionList.map((s, index) => <MenuItem key={s} value={index}>{s}</MenuItem>)}
+                        {solutionList.map((s, index) => <MenuItem key={s.fileName} value={index}>{"[" + s.size + "] " + s.fileName}</MenuItem>)}
                     </Select>
                 </Grid>
                 <Grid item xs={6}>
