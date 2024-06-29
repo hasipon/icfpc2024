@@ -13,3 +13,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: visualizer/lambdaman
         run: cd visualizer/lambdaman && npm i && npm run build && sudo rm -rf /var/www/html/lambdaman && sudo mv dist /var/www/html/lambdaman
+      - name: visualizer/spaceship
+        run: cd visualizer/spaceship && npm i && npm run build && sudo rm -rf /var/www/html/spaceship && sudo mv dist /var/www/html/spaceship
