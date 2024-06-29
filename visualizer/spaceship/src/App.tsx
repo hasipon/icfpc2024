@@ -55,6 +55,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     const svgChildren = [];
     const r = 1 + Math.max(W,H) / 512;
+    const flip_y = (y: number) => max_y - (y - min_y);
 
     svgChildren.push(
         <rect key={"rect_bg"} x={min_x} y={min_y} width={W+r} height={H+r} fill={"#CCCCCC"}></rect>
@@ -64,13 +65,11 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         const x = stage[i][0];
         const y = stage[i][1];
         if (!visited.has("" + x + "_" + y)) {
-            const cx = x;
-            const cy = y;
-            svgChildren.push( <rect key={"rect_" + i} x={cx} y={cy} width={r} height={r} fill={"#444444"}></rect> );
+            svgChildren.push( <rect key={"rect_" + i} x={x} y={flip_y(y)} width={r} height={r} fill={"#444444"}></rect> );
         }
     }
 
-    svgChildren.push( <rect key={"rect_p"} x={px} y={py} width={r} height={r} fill={"#AA0000"}></rect> );
+    svgChildren.push( <rect key={"rect_p"} x={px} y={flip_y(py)} width={r} height={r} fill={"#CC0000"}></rect> );
 
     return <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W+r) + " " + (H+r)} id="game">{svgChildren}</svg>
 });
