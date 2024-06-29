@@ -11,9 +11,9 @@ use std::{fs, mem, os::windows::process};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let id = "shohei3";
     let dirss = [
-        [Dir::L, Dir::R, Dir::D, Dir::U],
+        [Dir::R, Dir::D, Dir::U, Dir::L],
     ];
-    for i in 0..21 {
+    for i in 3..4 {
         let number = i + 1;
         let path = format!("../../../solutions/lambdaman/{}-{}.txt", number, id);
         fs::remove_file(path.clone());
