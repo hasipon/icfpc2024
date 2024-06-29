@@ -118,10 +118,14 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
     for(int i = 0; i<vg.size(); i++){
         used[i] = false;
     }
+    int lastId = -1;
     for(int i =0 ; i<vg.size(); i++){
         int minDist = 1e9;
         int select = -1;
-        for(int j = 0; j<vg.size(); j++){
+        int cnt =0;
+        for(int j = max(i-500, 0); j<vg.size(); j++){
+            cnt++;
+            if(lastId != -1 && cnt > 500) break;
             if(used[j]) continue;
             int dist = max(trip_hist_by_dist(vg[j].first - xs, 0,0).size(),
                         trip_hist_by_dist(vg[j].second - ys, 0, 0).size());
@@ -132,26 +136,38 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
         }
         ret.push_back(vg[select]);
         used[select] = true;
+        lastId = select;
+    }
+    for(int i = 0; i<vg.size(); i++){
+        if(!used[i])return vector<pair<int, int> >();
     }
     return ret;
 }
 
 int main() {
-    for(Int i = 1; i<100000; i++){
+    for(Int i = 1; i<1000; i++){
         distAndAccel.push_back(make_pair(i*i, i));
     }
     vector<vector<Int>> anss;
     auto vg = (input());
-    if(vg.size() <= 5000){
-        vector<pair<int, int> > no = nearOrder(vg);
-        anss.push_back(solve(no));
-    }
     {
         vector<pair<int, int> > xo = vg;
         sort(xo.begin(), xo.end());
         anss.push_back(solve(xo));
+        {
+            vector<pair<int, int> > no = nearOrder(xo);
+            if(!no.empty()){
+                anss.push_back(solve(no));
+            }
+        }
         reverse(xo.begin(), xo.end());
         anss.push_back(solve(xo));
+        {
+            vector<pair<int, int> > no = nearOrder(xo);
+            if(!no.empty()) {
+                anss.push_back(solve(no));
+            }
+        }
     }
     {
         vector<pair<int, int> > yo = vg;
@@ -163,8 +179,20 @@ int main() {
             swap(yo[i].first, yo[i].second);
         }
         anss.push_back(solve(yo));
+        {
+            vector<pair<int, int> > no = nearOrder(yo);
+            if(!no.empty()) {
+                anss.push_back(solve(no));
+            }
+        }
         reverse(yo.begin(), yo.end());
         anss.push_back(solve(yo));
+        {
+            vector<pair<int, int> > no = nearOrder(yo);
+            if(!no.empty()) {
+                anss.push_back(solve(no));
+            }
+        }
     }
     Int miniAns = 1e9;
     vector<Int> ans;
