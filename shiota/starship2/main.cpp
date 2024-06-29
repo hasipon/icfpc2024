@@ -259,8 +259,10 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
             cnt++;
             if(lastId != -1 && cnt > 1000) break;
             if(used[j]) continue;
-            int dist = trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() +
-                        trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size();
+            // int dist = trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() +
+            // trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size();
+            int dist = abs(vg[j].first - xs) +
+                       abs(vg[j].second - ys );
             if(dist < minDist){
                 minDist = dist;
                 select = j;
@@ -269,6 +271,8 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
         ret.push_back(vg[select]);
         used[select] = true;
         lastId = select;
+        xs = vg[select].first;
+        ys = vg[select].second;
     }
     for(int i = 0; i<vg.size(); i++){
         if(!used[i])return vector<pair<int, int> >();
