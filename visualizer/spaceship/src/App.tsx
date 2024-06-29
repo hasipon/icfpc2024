@@ -3,6 +3,8 @@ import {Grid, Input, MenuItem, Select, Slider, TextField} from "@mui/material";
 import axios from "axios";
 import './App.css'
 
+const gcd = (x:number, y:number) => x % y ? gcd(y, x % y) : y;
+
 const SvgContent = memo((props: {input: string, solution: string, time: number}) => {
     let t = props.time;
     if (t < 0) {
@@ -10,6 +12,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     }
 
     const stage = props.input.trim().split(/\r?\n/).map(line => line.split(" ").map(v => Number(v)));
+    const targets = new Set();
     let min_x = -10, max_x = -10, min_y = 10, max_y = 10;
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
@@ -18,6 +21,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         max_x = Math.max(max_x, x);
         min_y = Math.min(min_y, y);
         max_y = Math.max(max_y, y);
+        targets.add(`${x}_${y}`);
     }
 
     const W = max_x - min_x;
@@ -32,7 +36,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     let px = 0, py = 0;
     let vx = 0, vy = 0;
-    const visited = new Set(["0_0"]);
+
     for (let i = 0; i < Math.min(props.solution.length, t); i++) {
         const c = props.solution[i];
         let ax = 0;
@@ -50,7 +54,30 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         vy += ay;
         px += vx;
         py += vy;
-        visited.add("" + px + "_" + py);
+        targets.delete(`${px}_${py}`);
+
+        if (vx == 0 && vy !== 0) {
+            const num_p = Math.abs(vy);
+            for (let dt = 0; dt < num_p; dt++) {
+                const xx = px;
+                const yy = py - vy * (dt + 1) / num_p;
+                targets.delete(`${xx}_${yy}`);
+            }
+        } else if (vx !== 0 && vy == 0) {
+            const num_p = Math.abs(vx);
+            for (let dt = 0; dt < num_p; dt++) {
+                const xx = px - vx * (dt + 1) / num_p;
+                const yy = py;
+                targets.delete(`${xx}_${yy}`);
+            }
+        } else if (vx !== 0 && vy !== 0) {
+            const num_p = gcd(Math.abs(vx), Math.abs(vy));
+            for (let dt = 0; dt < num_p; dt++) {
+                const xx = px - vx * (dt + 1) / num_p;
+                const yy = py - vy * (dt + 1) / num_p;
+                targets.delete(`${xx}_${yy}`);
+            }
+        }
     }
 
     const svgChildren = [];
@@ -64,7 +91,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
         const y = stage[i][1];
-        if (!visited.has("" + x + "_" + y)) {
+        if (targets.has(`${x}_${y}`)) {
             svgChildren.push( <rect key={"rect_" + i} x={x} y={flip_y(y)} width={r} height={r} fill={"#444444"}></rect> );
         }
     }
@@ -75,11 +102,11 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 });
 
 function App() {
-    const [problemNo, setProblemNo] = useState<number>(2);
+    const [problemNo, setProblemNo] = useState<number>(1);
     const [solutionList, setSolutionList] = useState<string[]>([]);
     const [selectedSolution, setSelectedSolution] = useState<number>(0);
     const [inputText, setInputText] = useState<string>("###.#...\n" + "...L..##\n" + ".#######");
-    const [outputText, setOutputText] = useState<string>("84996111319999641117429276662745436996911191355654363762549151777789912262165515554373735559191");
+    const [outputText, setOutputText] = useState<string>("");
     const [time, setTime] = useState<number>(3);
 
     useEffect(() => {
