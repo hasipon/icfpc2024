@@ -2,7 +2,7 @@ package data ;
 
 typedef Problem = 
 {
-	blocks: Array<Bool>,
+	roads: Array<Bool>,
 	startX: Int,
 	startY: Int,
 	width: Int,
@@ -13,9 +13,17 @@ typedef Problem =
 
 typedef State = 
 {
+	moves   : Array<Move>,
 }
 
-typedef Result = 
+enum abstract Move(String)
 {
-	data:Array<String>,
+	var R;
+	var L;
+	var U;
+	var D;
+	var r;
+	var l;
+	var u;
+	var d;
 }

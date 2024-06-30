@@ -13,7 +13,7 @@ def convint(n):
 		n //= 94
 	return r
 
-for i in range(11, 22):
+for i in range(16, 17):
     header = "solve lambdaman" + str(i) + " "
     min = ""
     min_file = ""
@@ -46,7 +46,6 @@ for i in range(11, 22):
         for c in line:
             enc *= 4
             enc += data.index(c)
-            
         
         msg = '''B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I" BD B% vd I% S{keys} S{header} I{data}'''
         msg = msg.format(
@@ -70,7 +69,7 @@ for i in range(11, 22):
         i = 0
         valid = True
         for c in line:
-            if i % 2 == 1:
+            if i  % 2 == 1:
                 if prev != c:
                     valid = False
                     break
@@ -81,8 +80,7 @@ for i in range(11, 22):
                 
         if valid:
             data = convint(enc)
-            msg = '''
-                B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I# BD B* I# B% vd I% S{keys} S{header} I{data}'''
+            msg = '''B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I# BD B* I# B% vd I% S{keys} S{header} I{data}'''
             msg = msg.format(
                 data = convint(enc),
                 header = ''.join(chr(tbl.index(x)+33) for x in header),
@@ -93,6 +91,27 @@ for i in range(11, 22):
                 "2文字圧縮"
             )
             print("2文字圧縮" + str(max) + ":" + str(len(msg)))
+
+        # 8文字モード    
+        if line[0] != 'R': 
+            data = ['R', 'D', 'L', 'U']
+            keys = "LLLLLLLL>>>>>>>>FFFFFFFFOOOOOOOO"
+        else:
+            data = ['D', 'R', 'L', 'U']
+            keys = ">>>>>>>>LLLLLLLLFFFFFFFFOOOOOOOO"
+        
+        enc = 0
+        i = 0
+        valid = True
+        for c in line:
+            if i  % 2 == 1:
+                if prev != c:
+                    valid = False
+                    break
+                enc *= 4
+                enc += data.index(c)
+            i += 1
+            prev = c
 
         #ランレングス圧縮
         if valid:

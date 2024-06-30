@@ -46,7 +46,7 @@ Main.main = function() {
 		var width = 0;
 		var height = 0;
 		var source = haxe_Resource.getString(name);
-		var blocks = [];
+		var roads = [];
 		var x = 0;
 		var y = 0;
 		var startX = 0;
@@ -57,13 +57,13 @@ Main.main = function() {
 			var i1 = _g1++;
 			var char = source.charAt(i1);
 			if(char == "#") {
-				blocks.push(true);
+				roads.push(false);
 				++x;
 			} else if(char == ".") {
-				blocks.push(false);
+				roads.push(true);
 				++x;
 			} else if(char == "L") {
-				blocks.push(false);
+				roads.push(true);
 				startX = x;
 				startY = y;
 				++x;
@@ -76,12 +76,17 @@ Main.main = function() {
 			}
 		}
 		height = y;
-		Main.problems.push({ blocks : blocks, startX : startX, startY : startY, width : width, height : height, problemSize : width > height ? width : height, stepSize : skippable ? 2 : 1});
+		Main.problems.push({ roads : roads, startX : startX, startY : startY, width : width, height : height, problemSize : width > height ? width : height, stepSize : skippable ? 2 : 1});
 	}
 	window.document.getElementById("problem").addEventListener("change",Main.refresh);
+	window.document.getElementById("problem").addEventListener("input",Main.refresh);
+	window.addEventListener("keydown",Main.keyDown);
 	Main.refresh();
 };
 Main.refresh = function() {
+	var form = window.document.getElementById("problem");
+	var problem = Main.problems[Std.parseInt(form.value) - 1];
+	Main.state = { moves : []};
 	Main.draw();
 };
 Main.draw = function() {
@@ -91,6 +96,66 @@ Main.draw = function() {
 	var scale = 500 / problem.problemSize;
 	Main.problemGraphics.beginFill(1118481);
 	Main.problemGraphics.drawRect(0,0,500,500);
+	var _g = [];
+	var _g1 = 0;
+	var _g2 = problem.roads;
+	while(_g1 < _g2.length) {
+		var b = _g2[_g1];
+		++_g1;
+		_g.push(b);
+	}
+	var remains = _g;
+	var sx = problem.startX;
+	var sy = problem.startY;
+	remains[sx + sy * problem.width] = false;
+	var move = function(dx,dy,len) {
+		var _g = 0;
+		var _g1 = len;
+		while(_g < _g1) {
+			var _ = _g++;
+			var nextX = sx + dx;
+			var nextY = sy + dy;
+			if(0 <= nextX && nextX < problem.width && 0 <= nextY && nextY < problem.height && problem.roads[nextX + nextY * problem.width]) {
+				remains[nextX + nextY * problem.width] = false;
+				sx = nextX;
+				sy = nextY;
+			} else {
+				break;
+			}
+		}
+	};
+	var _g = 0;
+	var _g1 = Main.state.moves;
+	while(_g < _g1.length) {
+		var m = _g1[_g];
+		++_g;
+		switch(m) {
+		case "D":
+			move(0,1,1);
+			break;
+		case "L":
+			move(-1,0,1);
+			break;
+		case "R":
+			move(1,0,1);
+			break;
+		case "U":
+			move(0,-1,1);
+			break;
+		case "d":
+			move(0,1,problem.problemSize);
+			break;
+		case "l":
+			move(-1,0,problem.problemSize);
+			break;
+		case "r":
+			move(1,0,problem.problemSize);
+			break;
+		case "u":
+			move(0,-1,problem.problemSize);
+			break;
+		}
+	}
 	var _g = 0;
 	var _g1 = problem.width;
 	while(_g < _g1) {
@@ -99,10 +164,68 @@ Main.draw = function() {
 		var _g3 = problem.height;
 		while(_g2 < _g3) {
 			var y = _g2++;
-			Main.problemGraphics.beginFill(problem.blocks[x + y * problem.width] ? 1118481 : 8947848,1);
+			Main.problemGraphics.beginFill(problem.roads[x + y * problem.width] ? 8947848 : 1118481,1);
 			Main.problemGraphics.drawRect(x * scale,y * scale,scale,scale);
+			if(remains[x + y * problem.width]) {
+				Main.problemGraphics.beginFill(16776960);
+				Main.problemGraphics.drawCircle((x + 0.5) * scale,(y + 0.5) * scale,scale / 5);
+			}
+			if(sx == x && sy == y) {
+				Main.problemGraphics.beginFill(16711680);
+				Main.problemGraphics.drawCircle((x + 0.5) * scale,(y + 0.5) * scale,scale / 3);
+			}
 		}
 	}
+	var form = window.document.getElementById("solution");
+	var result = problem.problemSize + "\n" + problem.stepSize + "\n";
+	var _g = 0;
+	var _g1 = Main.state.moves;
+	while(_g < _g1.length) {
+		var move1 = _g1[_g];
+		++_g;
+		result += move1;
+	}
+	form.innerHTML = result;
+};
+Main.keyDown = function(e) {
+	switch(e.keyCode) {
+	case 65:
+		Main.addMove(e.shiftKey ? "L" : "l");
+		e.preventDefault();
+		break;
+	case 68:
+		Main.addMove(e.shiftKey ? "R" : "r");
+		e.preventDefault();
+		break;
+	case 82:
+		Main.reset();
+		e.preventDefault();
+		break;
+	case 83:
+		Main.addMove(e.shiftKey ? "D" : "d");
+		e.preventDefault();
+		break;
+	case 87:
+		Main.addMove(e.shiftKey ? "U" : "u");
+		e.preventDefault();
+		break;
+	case 90:
+		Main.undo();
+		e.preventDefault();
+		break;
+	}
+};
+Main.addMove = function(move) {
+	Main.state.moves.push(move);
+	Main.draw();
+};
+Main.undo = function() {
+	Main.state.moves.pop();
+	Main.draw();
+};
+Main.reset = function() {
+	Main.state.moves.length = 0;
+	Main.draw();
 };
 Math.__name__ = true;
 var Std = function() { };
