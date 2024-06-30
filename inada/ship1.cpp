@@ -369,10 +369,7 @@ int main(int argc, char *argv[]) {
     auto vg = input(ifs);
     ifs.close();
 
-    sort(vg.begin(), vg.end(), [](auto &a, auto &b) {
-	    return abs(a) < abs(b);
-    });
-	ChokudaiSearch cs(vg, true);
+	ChokudaiSearch cs(vg, false);
 	cs.Run(300, 60 * 1000);
 	auto bests = cs.GetBests();
 	vector<int> moves;
