@@ -124,12 +124,10 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         <line key={"line_v"} x1={px} y1={flip_y(py)} x2={px+vx} y2={flip_y(py+vy)} strokeWidth={r/2} stroke={"#CC0000"}></line>
     );
 
-    if (t + 1 < moves.length) {
-        const [ax, ay] = get_a(moves[t+1]);
-        svgChildren.push(
-            <line key={"line_a"} x1={px} y1={flip_y(py)} x2={px+ax} y2={flip_y(py+ay)} strokeWidth={r/2} stroke={"#0000CC"}></line>
-        );
-    }
+    const [ax, ay] = get_a(moves[t]);
+    svgChildren.push(
+        <line key={"line_a"} x1={px} y1={flip_y(py)} x2={px+ax} y2={flip_y(py+ay)} strokeWidth={r/2} stroke={"#0000CC"}></line>
+    );
 
     return <>
         <pre>p={px},{py} v={vx},{vy} n={targets.size}</pre>
