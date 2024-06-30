@@ -111,11 +111,9 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
         const y = stage[i][1];
-        if (targets.has(`${x}_${y}`)) {
-            svgChildren.push(
-                <circle key={"stage_" + i} cx={x} cy={flip_y(y)} r={r} fill={"#444444"}></circle>
-            );
-        }
+        svgChildren.push(
+            <circle key={`stage_${i}`} cx={x} cy={flip_y(y)} r={r} fill={"#444444"} opacity={targets.has(`${x}_${y}`) ? 1 : 0}/>,
+        );
     }
 
     svgChildren.push(
@@ -134,7 +132,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     }
 
     return <>
-        <p>p={px},{py} v={vx},{vy}</p>
+        <pre>p={px},{py} v={vx},{vy} n={targets.size}</pre>
         <svg width="1024" height="1024" viewBox={`${min_x-pad} ${min_y-pad} ${W+pad*2} ${H+pad*2}`} id="game">{svgChildren}</svg>
     </>
 });
