@@ -3,6 +3,11 @@ import {Grid, Input, MenuItem, Select, Slider, TextField} from "@mui/material";
 import axios from "axios";
 import './App.css'
 
+const solutionToMoves = (solution: string) : string => {
+    const pattern = /solve spaceship\d+/;
+    return solution.replace(pattern, "").trim();
+}
+
 const SvgContent = memo((props: {input: string, solution: string, time: number}) => {
     let t = props.time;
     if (t < 0) {
@@ -18,6 +23,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         return;
     }
 
+    const moves = solutionToMoves(props.solution);
     const targets = new Set();
     let min_x = -10, max_x = 10;
     let min_y = -10, max_y = 10;
@@ -30,6 +36,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         max_y = Math.max(max_y, y);
         targets.add(`${x}_${y}`);
     }
+
     const W = max_x - min_x;
     const H = max_y - min_y;
 
@@ -43,12 +50,9 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     let px = 0, py = 0;
     let vx = 0, vy = 0;
-    let ax = 0, ay = 0;
-
-    for (let i = 0; i < Math.min(props.solution.length, t); i++) {
-        const c = props.solution[i];
-        ax = 0;
-        ay = 0;
+    const get_a = (c: string) => {
+        let ax = 0;
+        let ay = 0;
         if (c === "1") { ax--; ay--; }
         if (c === "2") { ay--; }
         if (c === "3") { ax++; ay--; }
@@ -57,7 +61,11 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         if (c === "7") { ax--; ay++; }
         if (c === "8") { ay++; }
         if (c === "9") { ax++; ay++; }
+        return [ax, ay];
+    }
 
+    for (let i = 0; i < Math.min(moves.length, t); i++) {
+        const [ax, ay] = get_a(moves[i]);
         vx += ax;
         vy += ay;
         px += vx;
@@ -92,31 +100,38 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     }
 
     const svgChildren = [];
-    const r = 1 + Math.max(W,H) / 512;
+    const r = 0.5 + Math.max(W,H) / 1024;
+    const pad = 10;
     const flip_y = (y: number) => max_y - (y - min_y);
 
     svgChildren.push(
-        <rect key={"rect_bg"} x={min_x} y={min_y} width={W+r} height={H+r} fill={"#CCCCCC"}></rect>
+        <rect key={"rect_bg"} x={min_x-pad} y={min_y-pad} width={W+pad*2} height={H+pad*2} fill={"#CCCCCC"}></rect>
     );
 
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
         const y = stage[i][1];
-        if (targets.has(`${x}_${y}`)) {
-            svgChildren.push(
-                <rect key={"rect_" + i} x={x} y={flip_y(y)} width={r} height={r} fill={"#444444"}></rect>
-            );
-        }
+        svgChildren.push(
+            <circle key={`stage_${i}`} cx={x} cy={flip_y(y)} r={r} fill={"#444444"} opacity={targets.has(`${x}_${y}`) ? 1 : 0}/>,
+        );
     }
 
     svgChildren.push(
-        <rect key={"rect_p"} x={px} y={flip_y(py)} width={r} height={r} fill={"#CC0000"}></rect>
+        <circle key={"player"} cx={px} cy={flip_y(py)} r={r} fill={"#CC0000"}/>
+    );
+
+    svgChildren.push(
+        <line key={"line_v"} x1={px} y1={flip_y(py)} x2={px+vx} y2={flip_y(py+vy)} strokeWidth={r/2} stroke={"#CC0000"}></line>
+    );
+
+    const [ax, ay] = get_a(moves[t]);
+    svgChildren.push(
+        <line key={"line_a"} x1={px} y1={flip_y(py)} x2={px+ax} y2={flip_y(py+ay)} strokeWidth={r/2} stroke={"#0000CC"}></line>
     );
 
     return <>
-        <p>p={px},{py} v={vx},{vy} a={ax},{ay}</p>
-        <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W + r) + " " + (H + r)}
-             id="game">{svgChildren}</svg>
+        <pre>p={px},{py} v={vx},{vy} n={targets.size}</pre>
+        <svg width="1024" height="1024" viewBox={`${min_x-pad} ${min_y-pad} ${W+pad*2} ${H+pad*2}`} id="game">{svgChildren}</svg>
     </>
 });
 
@@ -134,7 +149,7 @@ function App() {
     const [time, setTime] = useState<number>(3);
 
     useEffect(() => {
-        setTime(outputText.length);
+        setTime(solutionToMoves(outputText).length);
     }, [outputText])
 
     useEffect(() => {
@@ -258,7 +273,7 @@ function App() {
                 <Grid item m={1} xs={6}>
                     <Slider
                         value={time}
-                        max={outputText.length}
+                        max={solutionToMoves(outputText).length}
                         onChange={(_e, newValue) => {
                             setTime(newValue as number);
                         }}
@@ -274,7 +289,7 @@ function App() {
                         inputProps={{
                             step: 1,
                             min: 0,
-                            max: outputText.length,
+                            max: solutionToMoves(outputText).length,
                             type: 'number',
                             'aria-labelledby': 'input-slider',
                         }}

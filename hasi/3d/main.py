@@ -140,7 +140,7 @@ class Main:
                     update[i, j + 1].append(f[i - 1, j])
 
         new_f = f.copy()
-        submitted = []
+        submitted = set()
         for pos, values in update.items():
             d = False
             v = None
@@ -153,7 +153,7 @@ class Main:
                     v = x
             if v is not None:
                 if new_f.get(pos) == 'S':
-                    submitted.append(v)
+                    submitted.add(v)
                 new_f[pos] = v
             elif d:
                 del new_f[pos]
@@ -162,7 +162,7 @@ class Main:
             raise Exception(f'multiple submissions {submitted}')
 
         if len(submitted) == 1:
-            print('result =', submitted[0])
+            print('result =', submitted.pop())
             return True
 
         if warp:
