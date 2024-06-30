@@ -62,13 +62,13 @@ def main():
 
             v1 = encode_v1(prob_no, moves)
             if len(v1) < best_size:
-                bset_size = len(v1)
+                best_size = len(v1)
                 with open(icfp_file, "w") as f:
                     f.write(v1)
 
             v2 = encode_v2(prob_no, moves)
             if len(v2) < best_size:
-                bset_size = len(v2)
+                best_size = len(v2)
                 with open(icfp_file, "w") as f:
                     f.write(v2)
 
