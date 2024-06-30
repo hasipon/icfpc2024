@@ -3,6 +3,11 @@ import {Grid, Input, MenuItem, Select, Slider, TextField} from "@mui/material";
 import axios from "axios";
 import './App.css'
 
+const solutionToMoves = (solution: string) : string => {
+    const pattern = /solve spaceship\d+/;
+    return solution.replace(pattern, "").trim();
+}
+
 const SvgContent = memo((props: {input: string, solution: string, time: number}) => {
     let t = props.time;
     if (t < 0) {
@@ -18,6 +23,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         return;
     }
 
+    const moves = solutionToMoves(props.solution);
     const targets = new Set();
     let min_x = -10, max_x = 10;
     let min_y = -10, max_y = 10;
@@ -30,6 +36,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         max_y = Math.max(max_y, y);
         targets.add(`${x}_${y}`);
     }
+
     const W = max_x - min_x;
     const H = max_y - min_y;
 
@@ -57,8 +64,8 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         return [ax, ay];
     }
 
-    for (let i = 0; i < Math.min(props.solution.length, t); i++) {
-        const [ax, ay] = get_a(props.solution[i]);
+    for (let i = 0; i < Math.min(moves.length, t); i++) {
+        const [ax, ay] = get_a(moves[i]);
         vx += ax;
         vy += ay;
         px += vx;
@@ -94,10 +101,11 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     const svgChildren = [];
     const r = 0.5 + Math.max(W,H) / 1024;
+    const pad = 10;
     const flip_y = (y: number) => max_y - (y - min_y);
 
     svgChildren.push(
-        <rect key={"rect_bg"} x={min_x} y={min_y} width={W+r} height={H+r} fill={"#CCCCCC"}></rect>
+        <rect key={"rect_bg"} x={min_x-pad} y={min_y-pad} width={W+pad*2} height={H+pad*2} fill={"#CCCCCC"}></rect>
     );
 
     for (let i = 0; i < stage.length; i++) {
@@ -118,8 +126,8 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         <line key={"line_v"} x1={px} y1={flip_y(py)} x2={px+vx} y2={flip_y(py+vy)} strokeWidth={r/2} stroke={"#CC0000"}></line>
     );
 
-    if (t + 1 < props.solution.length) {
-        const [ax, ay] = get_a(props.solution[t+1]);
+    if (t + 1 < moves.length) {
+        const [ax, ay] = get_a(moves[t+1]);
         svgChildren.push(
             <line key={"line_a"} x1={px} y1={flip_y(py)} x2={px+ax} y2={flip_y(py+ay)} strokeWidth={r/2} stroke={"#0000CC"}></line>
         );
@@ -127,8 +135,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     return <>
         <p>p={px},{py} v={vx},{vy}</p>
-        <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W + r) + " " + (H + r)}
-             id="game">{svgChildren}</svg>
+        <svg width="1024" height="1024" viewBox={`${min_x-pad} ${min_y-pad} ${W+pad*2} ${H+pad*2}`} id="game">{svgChildren}</svg>
     </>
 });
 
@@ -146,7 +153,7 @@ function App() {
     const [time, setTime] = useState<number>(3);
 
     useEffect(() => {
-        setTime(outputText.length);
+        setTime(solutionToMoves(outputText).length);
     }, [outputText])
 
     useEffect(() => {
@@ -270,7 +277,7 @@ function App() {
                 <Grid item m={1} xs={6}>
                     <Slider
                         value={time}
-                        max={outputText.length}
+                        max={solutionToMoves(outputText).length}
                         onChange={(_e, newValue) => {
                             setTime(newValue as number);
                         }}
@@ -286,7 +293,7 @@ function App() {
                         inputProps={{
                             step: 1,
                             min: 0,
-                            max: outputText.length,
+                            max: solutionToMoves(outputText).length,
                             type: 'number',
                             'aria-labelledby': 'input-slider',
                         }}
