@@ -111,6 +111,8 @@ class Main
 		var form:InputElement = cast Browser.document.getElementById("problem");
 		var problem = problems[Std.parseInt(form.value) - 1];
 		state = {
+			x: problem.startX,
+			y: problem.startY,
 			moves: [],
 		}
 		draw();
@@ -131,24 +133,16 @@ class Main
 			500,
 		);
 		var remains = [for (b in problem.roads) b];
-		var sx = problem.startX;
-		var sy = problem.startY;
-		remains[sx + sy * problem.width] = false;
+		state.x = problem.startX;
+		state.y = problem.startY;
+		remains[state.x + state.y * problem.width] = false;
 		function move(dx:Int, dy:Int, len:Int)
 		{
 			for (_ in 0...len)
 			{
-				var nextX = sx + dx;
-				var nextY = sy + dy;
-				if (
-					0 <= nextX && nextX < problem.width &&
-					0 <= nextY && nextY < problem.height &&
-					problem.roads[nextX + nextY * problem.width]
-				)
+				if (tryMove(dx, dy))
 				{
-					remains[nextX + nextY * problem.width] = false;
-					sx = nextX;
-					sy = nextY;
+					remains[state.x + state.y * problem.width] = false;
 				}
 				else
 				{
@@ -160,10 +154,10 @@ class Main
 		{
 			switch m
 			{
-				case R: move( 1,  0, 1);
-				case L: move(-1,  0, 1);
-				case U: move( 0, -1, 1);
-				case D: move( 0,  1, 1);
+				case R: move( 1,  0, problem.stepSize);
+				case L: move(-1,  0, problem.stepSize);
+				case U: move( 0, -1, problem.stepSize);
+				case D: move( 0,  1, problem.stepSize);
 				case r: move( 1,  0, problem.problemSize);
 				case l: move(-1,  0, problem.problemSize);
 				case u: move( 0, -1, problem.problemSize);
@@ -195,7 +189,7 @@ class Main
 						scale / 5,
 					);
 				}
-				if (sx == x && sy == y)
+				if (state.x == x && state.y == y)
 				{
 					problemGraphics.beginFill(
 						0xFF0000,
@@ -219,23 +213,58 @@ class Main
 	
 	public static function keyDown(e:KeyboardEvent):Void
 	{
-		switch e.keyCode
+		if (!e.ctrlKey)
 		{
-			case KeyboardEvent.DOM_VK_W    : addMove(if (e.shiftKey) Move.U else Move.u); e.preventDefault();
-			case KeyboardEvent.DOM_VK_S    : addMove(if (e.shiftKey) Move.D else Move.d); e.preventDefault();
-			case KeyboardEvent.DOM_VK_A    : addMove(if (e.shiftKey) Move.L else Move.l); e.preventDefault();
-			case KeyboardEvent.DOM_VK_D    : addMove(if (e.shiftKey) Move.R else Move.r); e.preventDefault();
-			case KeyboardEvent.DOM_VK_Z    : undo(); e.preventDefault();
-			case KeyboardEvent.DOM_VK_R    : reset(); e.preventDefault();
+			switch e.keyCode
+			{
+				case KeyboardEvent.DOM_VK_W | KeyboardEvent.DOM_VK_COMMA: addMove(if (e.shiftKey) Move.U else Move.u); e.preventDefault();
+				case KeyboardEvent.DOM_VK_S | KeyboardEvent.DOM_VK_O    : addMove(if (e.shiftKey) Move.D else Move.d); e.preventDefault();
+				case KeyboardEvent.DOM_VK_A : addMove(if (e.shiftKey) Move.L else Move.l); e.preventDefault();
+				case KeyboardEvent.DOM_VK_D | KeyboardEvent.DOM_VK_E    : addMove(if (e.shiftKey) Move.R else Move.r); e.preventDefault();
+				case KeyboardEvent.DOM_VK_Z : undo(); e.preventDefault();
+				case KeyboardEvent.DOM_VK_R : reset(); e.preventDefault();
+			}
 		}
 	}
 	
 	public static function addMove(move:Move):Void
 	{
-		state.moves.push(move);
-		draw();
+		var success = switch move
+		{
+			case R: tryMove( 1,  0);
+			case L: tryMove(-1,  0);
+			case U: tryMove( 0, -1);
+			case D: tryMove( 0,  1);
+			case r: tryMove( 1,  0);
+			case l: tryMove(-1,  0);
+			case u: tryMove( 0, -1);
+			case d: tryMove( 0,  1);
+		}
+		if (success)
+		{
+			state.moves.push(move);
+			draw();
+		}
 	}
 	
+	public static function tryMove(dx:Int, dy:Int):Bool
+	{
+		var form:InputElement = cast Browser.document.getElementById("problem");
+		var problem = problems[Std.parseInt(form.value) - 1];
+		var nextX = state.x + dx;
+		var nextY = state.y + dy;
+		if (
+			0 <= nextX && nextX < problem.width &&
+			0 <= nextY && nextY < problem.height &&
+			problem.roads[nextX + nextY * problem.width]
+		)
+		{
+			state.x = nextX;
+			state.y = nextY;
+			return true;
+		}
+		return false;
+	}
 	public static function undo():Void
 	{
 		state.moves.pop();

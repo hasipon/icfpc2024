@@ -4,6 +4,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <map>
 #include <queue>
 #include <set>
@@ -16,11 +17,14 @@ using namespace std::chrono;
 
 int envInt(const char* name, int defaultValue) {
 	auto s = getenv(name);
-	if (s != nullptr) {
-		return atoi(s);
-	}
-
+	if (s != nullptr) return atoi(s);
 	return defaultValue;
+}
+
+std::string envStr(const char* name, const char* defaultValue) {
+	auto s = getenv(name);
+	if (s != nullptr) return s;
+	return "";
 }
 
 using Int = long long;
@@ -358,7 +362,6 @@ private:
 	}
 
 	int base_turn_ = 0;
-public:
 	bool auto_target_sort_ = false;
 	int fixed_target_index_  = 0;
 	StageData stage_data_;
@@ -378,6 +381,31 @@ int main(int argc, char *argv[]) {
     ifstream ifs(argv[1]);
     auto vg = input(ifs);
     ifs.close();
+
+	auto sol_file = envStr("TSP_SOL", "");
+    if (!sol_file.empty()) {
+	    ifstream fs(sol_file);
+    	if (fs.is_open()) {
+		    int n, k;
+		    fs >> n;
+		    fs >> k;
+		    if (k != 0) {
+			    cerr << "tsp sol: invalid origin" << endl;
+			    exit(1);
+		    }
+
+		    auto org = vg;
+    		vg.resize(n);
+		    for (int i = 0; i < n; i++) {
+			    fs >> k;
+			    vg[i] = org[k - 1];
+		    }
+
+		    cerr << "loaded:" << sol_file << endl;
+    	} else {
+		    cerr << "sol file not found:" << sol_file << endl;
+    	}
+    }
 
 	ChokudaiSearch cs(vg, false);
 	cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 60 * 1000));
@@ -400,10 +428,8 @@ int main(int argc, char *argv[]) {
 		}
 		cout << endl;
 	} else {
-		// auto& best = *max_element(bests.begin(), bests.end(), [](const auto& a, const auto& b) { return a.next_index < b.next_index; });
 		auto& best = bests.back();
 		cerr << "Not found ... next_index=" << best.next_index << " score=" << best.score << endl;
-		cerr << cs.stage_data_[best.next_index].first << " " << cs.stage_data_[best.next_index].second << endl;
 		for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
 			moves.push_back(ptr->dir + 1);
 		}
