@@ -13,8 +13,8 @@ def convint(n):
 		n //= 94
 	return r
 
-for i in range(16, 17):
-    header = "solve lambdaman" + str(i) + " "
+for i in range(1, 22):
+    header = echo #"solve lambdaman" + str(i) + " "
     min = ""
     min_file = ""
     min_method = ""
@@ -36,8 +36,12 @@ for i in range(16, 17):
 
         #等分圧縮モード
         enc = 0
-        data = ['R', 'D', 'L', 'U']
-        keys = "L>FO"
+        if body[0] != 'R': 
+            data = ['R', 'D', 'L', 'U']
+            keys = "L>FO"
+        else:
+            data = ['D', 'R', 'L', 'U']
+            keys = ">LFO"
 
         for c in body:
             enc *= 8
@@ -48,11 +52,28 @@ for i in range(16, 17):
 
         msg = '''
 B~
-    B~ 
-        Lu B~
-            B~ La B~ va va
-            Lr Ld
+    Lu 
+        B~ 
+            B~
+                B~ La B~ va va
+                Lr Ld
+                    ? B= vd I!
+                        S{header}
+                        B.
+                            B~ B~ vr vr B/ vd I)
+                            B~ B~ B~ vu vu 
+                                B% B/ vd I# I%
+                                ? B= B% vd I# I!
+                                    I{step_size}
+                                    I{problem_size}
             I{data}
+    B~
+        Lr Ll Ln 
+            ? B< Ln I"
+                S
+                B.
+                    BT 1 BD B% Ll I" S{keys}
+                    B~ B~ B~ vr vr vl B- vn I"
 '''
         msg = re.sub("[\n\r \s]+", " ", msg).strip()
         msg = msg.format(
@@ -65,11 +86,12 @@ B~
             "対等圧縮"
         )
 
-    print(min_file)
-    print(min_method)
-    print(min)
-    res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=min)
-    assert res.ok
-    result = ''.join(tbl[ord(x)-33] for x in res.text[1:])
-    print(result)
-    time.sleep(3)
+    if min != "":
+        print(min_file)
+        print(min_method)
+        print(min)
+        res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=min)
+        assert res.ok
+        result = ''.join(tbl[ord(x)-33] for x in res.text[1:])
+        print(result)
+        time.sleep(3)
