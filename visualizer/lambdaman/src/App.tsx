@@ -232,7 +232,7 @@ function App() {
                 <Grid item m={1} xs={6}>
                     <Slider
                         value={time}
-                        max={outputText.length}
+                        max={movesText.length}
                         onChange={(_e, newValue) => {
                             setTime(newValue as number);
                         }}
@@ -248,7 +248,7 @@ function App() {
                         inputProps={{
                             step: 1,
                             min: 0,
-                            max: outputText.length,
+                            max: movesText.length,
                             type: 'number',
                             'aria-labelledby': 'input-slider',
                         }}
