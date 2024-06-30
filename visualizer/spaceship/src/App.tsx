@@ -43,12 +43,9 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     let px = 0, py = 0;
     let vx = 0, vy = 0;
-    let ax = 0, ay = 0;
-
-    for (let i = 0; i < Math.min(props.solution.length, t); i++) {
-        const c = props.solution[i];
-        ax = 0;
-        ay = 0;
+    const get_a = (c: string) => {
+        let ax = 0;
+        let ay = 0;
         if (c === "1") { ax--; ay--; }
         if (c === "2") { ay--; }
         if (c === "3") { ax++; ay--; }
@@ -57,7 +54,11 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         if (c === "7") { ax--; ay++; }
         if (c === "8") { ay++; }
         if (c === "9") { ax++; ay++; }
+        return [ax, ay];
+    }
 
+    for (let i = 0; i < Math.min(props.solution.length, t); i++) {
+        const [ax, ay] = get_a(props.solution[i]);
         vx += ax;
         vy += ay;
         px += vx;
@@ -92,7 +93,7 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     }
 
     const svgChildren = [];
-    const r = 1 + Math.max(W,H) / 512;
+    const r = 0.5 + Math.max(W,H) / 1024;
     const flip_y = (y: number) => max_y - (y - min_y);
 
     svgChildren.push(
@@ -104,17 +105,28 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         const y = stage[i][1];
         if (targets.has(`${x}_${y}`)) {
             svgChildren.push(
-                <rect key={"rect_" + i} x={x} y={flip_y(y)} width={r} height={r} fill={"#444444"}></rect>
+                <circle key={"stage_" + i} cx={x} cy={flip_y(y)} r={r} fill={"#444444"}></circle>
             );
         }
     }
 
     svgChildren.push(
-        <rect key={"rect_p"} x={px} y={flip_y(py)} width={r} height={r} fill={"#CC0000"}></rect>
+        <circle key={"player"} cx={px} cy={flip_y(py)} r={r} fill={"#CC0000"}/>
     );
 
+    svgChildren.push(
+        <line key={"line_v"} x1={px} y1={flip_y(py)} x2={px+vx} y2={flip_y(py+vy)} strokeWidth={r/2} stroke={"#CC0000"}></line>
+    );
+
+    if (t + 1 < props.solution.length) {
+        const [ax, ay] = get_a(props.solution[t+1]);
+        svgChildren.push(
+            <line key={"line_a"} x1={px} y1={flip_y(py)} x2={px+ax} y2={flip_y(py+ay)} strokeWidth={r/2} stroke={"#0000CC"}></line>
+        );
+    }
+
     return <>
-        <p>p={px},{py} v={vx},{vy} a={ax},{ay}</p>
+        <p>p={px},{py} v={vx},{vy}</p>
         <svg width="1024" height="1024" viewBox={"" + (min_x) + " " + (min_y) + " " + (W + r) + " " + (H + r)}
              id="game">{svgChildren}</svg>
     </>
