@@ -160,10 +160,10 @@ class Main
 		{
 			switch m
 			{
-				case R: move( 1,  0, 1);
-				case L: move(-1,  0, 1);
-				case U: move( 0, -1, 1);
-				case D: move( 0,  1, 1);
+				case R: move( 1,  0, problem.stepSize);
+				case L: move(-1,  0, problem.stepSize);
+				case U: move( 0, -1, problem.stepSize);
+				case D: move( 0,  1, problem.stepSize);
 				case r: move( 1,  0, problem.problemSize);
 				case l: move(-1,  0, problem.problemSize);
 				case u: move( 0, -1, problem.problemSize);
