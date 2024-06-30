@@ -47,7 +47,6 @@ double abs(pair<Int, Int> a) {
 	return sqrt(a.first * a.first + a.second * a.second);
 }
 
-
 template <typename T, unsigned N> class Ranking {
 public:
 	bool is_rankin(const T& value) {
@@ -185,8 +184,8 @@ public:
 			}
 		};
 
-		// const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
-		const auto n_thread = 1;
+		const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
+		// const auto n_thread = 1;
 		std::vector<std::thread> threads;
 		threads.reserve(n_thread);
 		for (int i = 0; i < n_thread; i++) {
@@ -285,12 +284,13 @@ private:
 		vx += dx[dir];
 		vy += dy[dir];
 
+		/*
 		if (vx != 0 && vy != 0) {
 			const auto num_p = gcd(abs(vx), abs(vy));
 			for (int dt = 0; dt < num_p; dt++) {
 				const auto xx = px + vx * dt / num_p;
 				const auto yy = py + vy * dt / num_p;
-				if (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
+				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
 					next_index++;
 				}
 			}
@@ -301,7 +301,7 @@ private:
 			for (int dt = 0; dt < num_p; dt++) {
 				const auto xx = px + vx * dt / num_p;
 				const auto yy = py;
-				if (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
+				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
 					next_index++;
 				}
 			}
@@ -312,14 +312,18 @@ private:
 			for (int dt = 0; dt < num_p; dt++) {
 				const auto xx = px;
 				const auto yy = py + vy * dt / num_p;
-				if (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
+				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
 					next_index++;
 				}
 			}
 		}
+		*/
 
 		px += vx;
 		py += vy;
+		while (stage_data_[next_index].first == px && stage_data_[next_index].second == py) {
+			next_index++;
+		}
 		return {px, py, vx, vy, next_index};
 	}
 
@@ -328,8 +332,9 @@ private:
 		const auto sp = next_index == 0 ? make_pair<Int, Int>(0, 0) : stage_data_[next_index - 1];
 		const auto w1 = abs(make_pair<Int, Int>(tp.first - px - vx, tp.second - py - vy));
 		const auto w2 = abs(make_pair<Int, Int>(tp.first - sp.first, tp.second - sp.second));
-		// return 1000.0 * (next_index + (1.0 - w1 / w2));
-		return 1000.0 * next_index;
+		return 1000.0 * (next_index + (1.0 - w1/w2));
+		// return 10000.0 * next_index - w1;
+		// return 1000.0 * next_index;
 	}
 
 	static uint64_t Hash(Int px, Int py, Int vx, Int vy, int next_index) {
@@ -349,7 +354,7 @@ public:
 	StageData stage_data_;
 	std::vector<std::array<uint64_t, 1 << 16>> weak_hash_;
 	std::vector<SearchNode> bests_;
-	std::vector<Ranking<SearchNode, 10000>> ranking_;
+	std::vector<Ranking<SearchNode, 1000>> ranking_;
 	std::vector<std::unique_ptr<std::mutex>> mutex_;
 	std::mutex g_mutex_;
 };
@@ -364,8 +369,11 @@ int main(int argc, char *argv[]) {
     auto vg = input(ifs);
     ifs.close();
 
+    sort(vg.begin(), vg.end(), [](auto &a, auto &b) {
+	    return abs(a) < abs(b);
+    });
 	ChokudaiSearch cs(vg, true);
-	cs.Run(200, 20 * 1000);
+	cs.Run(300, 60 * 1000);
 	auto bests = cs.GetBests();
 	vector<int> moves;
 	for (const auto& best : bests) {
@@ -384,11 +392,9 @@ int main(int argc, char *argv[]) {
 	cout << endl;
 
 	if (moves.empty()) {
-		auto& best = *max_element(bests.begin(), bests.end(),
-			[](const auto& a, const auto& b) {
-			return a.next_index < b.next_index;
-		});
-		cerr << "Not found ... next_index=" << best.next_index << endl;
+		// auto& best = *max_element(bests.begin(), bests.end(), [](const auto& a, const auto& b) { return a.next_index < b.next_index; });
+		auto& best = bests.back();
+		cerr << "Not found ... next_index=" << best.next_index << " score=" << best.score << endl;
 		cerr << cs.stage_data_[best.next_index].first << " " << cs.stage_data_[best.next_index].second << endl;
 		for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
 			moves.push_back(ptr->dir + 1);
