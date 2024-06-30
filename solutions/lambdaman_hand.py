@@ -13,33 +13,55 @@ def convint(n):
 		n //= 94
 	return r
 
-header = "echo "
-txt = '''B$ B$ La B$ va va Lr Ln ? B< vn I#~~ B. B$ B$ vr vr B+ vn I" BT I" BD B% B/ vn I& I) SL>FO>LOF S{header} I!'''
-
-msg = txt.format(
-	header = ''.join(chr(tbl.index(x)+33) for x in header)
-)
-
-print(msg)
-res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=msg)
-assert res.ok
-print("\n\n" + res.text)
-result = ''.join(tbl[ord(x)-33] for x in res.text[1:])
-print(result)
-f = open("result.txt", "w")
-line = f.write(result)
-f.close()
-time.sleep(3)
-
-for i in range(8, 9):
+for i in range(16, 17):
     header = "solve lambdaman" + str(i) + " "
-    msg = txt.format(
-        header = ''.join(chr(tbl.index(x)+33) for x in header)
-    )
-	
-    print(msg)
-    res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=msg)
+    min = ""
+    min_file = ""
+    min_method = ""
+    for file in glob.glob('lambdaman/' + str(i) + '-*.hand'):
+        f = open(file, "r")
+        problem_size = f.readline().replace("\n", "").replace("\r", "")
+        step_size = f.readline().replace("\n", "").replace("\r", "")
+        body = f.readline().replace("\n", "").replace("\r", "")
+        f.close()
+        
+        def update(msg, method):            
+            global min
+            global min_file
+            global min_method
+            if min == "" or len(msg) < len(min):
+                min = msg
+                min_method = method
+                min_file = file
+
+        #等分圧縮モード
+        enc = 0
+        data = ['R', 'D', 'L', 'U']
+        keys = "L>FO"
+
+        for c in body:
+            enc *= 8
+            if c in data:
+                enc += data.index(c) * 2
+            else:
+                enc += data.index(c.upper()) * 2 + 1
+
+        msg = ''''''
+        msg = msg.format(
+            data = convint(enc),
+            header = ''.join(chr(tbl.index(x)+33) for x in header),
+            keys = keys
+        )
+        update(
+            msg,
+            "対等圧縮"
+        )
+
+    print(min_file)
+    print(min_method)
+    print(min)
+    res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=min)
     assert res.ok
     result = ''.join(tbl[ord(x)-33] for x in res.text[1:])
-    print(str(i) + "\n" + result)
+    print(result)
     time.sleep(3)
