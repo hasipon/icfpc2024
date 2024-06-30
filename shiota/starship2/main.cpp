@@ -17,7 +17,7 @@ const Int dy[] = {-1, -1,  -1, 0, 0, 0, 1, 1, 1};
 class State{
 public:
     Int vx, vy, px, py;
-    set<pair<int, int> > target;
+    vector<pair<int, int> > target;
     bool found;
     vector<int> history;
     pair<int, int> gv, gp;
@@ -68,7 +68,7 @@ vector<int> genHistory(map<State, Int> &ope, State next,  pair<int, int> s, pair
     return history;
 }
  */
-pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBest, const set<pair<int, int>> &tg, pair<int, int> g){
+pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBest, const vector<pair<int, int>> &tg, pair<int, int> g){
     map<State, Int> minCost;
     map<State, Int>  ope;
     priority_queue<pair<Int, State>> Q;
@@ -78,16 +78,25 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
         Q.push(make_pair(0, start));
     }
 
+    State best;
+    best.found = false;
     while(!Q.empty()){
         Int cost = -Q.top().first;
         if(cost > 100 || cost > nowBest){
             return make_pair(State(), vector<int>(1, -1));
         }
         const State cur = Q.top().second;
-        if(cost > 5 && cur.found){
-            return make_pair(cur, cur.history);
-        }
         Q.pop();
+        if(best.found){
+            if(best.target.size() < cur.target.size()){
+                continue;
+            }
+            if(cur.found){
+                if(best.target.size() > cur.target.size()){
+                    best = cur;
+                }
+            }
+        }
 
         for(Int i = 0; i < 9; i++){
             State next = cur;
@@ -111,8 +120,8 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
                     Int dpx = cur.px + (vx / div) * j;
                     Int dpy = cur.py + (vy / div) * j;
                     auto dp = make_pair(dpx, dpy);
-                    if(next.target.count(dp)){
-                        next.target.erase(dp);
+                    if(next.target[0] == dp){
+                        next.target.erase(next.target.begin());
                     }
                     if(dp == g){
                         next.found = true;
@@ -121,25 +130,28 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
                     }
                 }
             }
+            if(next.target[0] == make_pair(next.px, next.py)){
+                next.target.erase(next.target.begin());
+            }
+            if(next.py == g.second && next.px == g.first){
+                next.found = true;
+                next.gv = make_pair(vx, vy);
+                next.gp = make_pair(px, py);
+            }
 
             if(minCost.find(next) == minCost.end() || minCost[next] > nextCost){
                 minCost[next] = nextCost;
                 ope[next] = i+1;
 
-                if(next.target.count(make_pair(next.px, next.py))){
-                    next.target.erase(next.target.find(make_pair(next.px, next.py)));
-                }
-                if(next.py == g.second && next.px == g.first){
-                    next.found = true;
-                    next.gv = make_pair(vx, vy);
-                    next.gp = make_pair(px, py);
-                }
                 if(next.target.empty()){
                     return make_pair(next, next.history);
                 }
                 Q.push(make_pair(-nextCost, next));
             }
         }
+    }
+    if(best.found){
+        return make_pair(best, best.history);
     }
     assert(false);
 }
@@ -152,14 +164,14 @@ vector<Int> solveDijskstra(vector<pair<int, int> > &vg, int nowBest){
     Int vx = 0, vy = 0;
     vector<Int> ret;
     for(int i = 0; i<vg.size(); i++){
-        set<pair<int, int>> target;
-        target.insert(vg[i]);
+        vector<pair<int, int>> target;
+        target.push_back(vg[i]);
         if(i < vg.size() - 1){
-           target.insert( vg[i+1]);
+           target.push_back( vg[i+1]);
         }
-// if(i < vg.size() - 2){
-//     target.insert( vg[i+2]);
-// }
+        if(i < vg.size() - 2){
+            target.push_back( vg[i+2]);
+        }
         auto result = dijkstra(sx, sy, vx, vy, int(nowBest - ret.size()), target, vg[i]);
         vector<int> history = result.second;
         for(Int j = 0; j < history.size(); j++){
@@ -188,6 +200,7 @@ vector<pair<int, int>> input(){
     vector<pair<int, int> > vg;
     int x, y;
     set<pair<int, int>> used;
+    used.insert(make_pair(0, 0));
     while(cin >> x >> y){
         if(used.count(make_pair(x, y))) continue;
         vg.push_back(make_pair(x, y));
@@ -320,7 +333,8 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
             // int dist = max(trip_hist_by_dist(abs(vg[j].first - xs), 0,0).size() ,
             // trip_hist_by_dist(abs(vg[j].second - ys), 0, 0).size());
 
-           int dist = max(abs(vg[j].first - xs), abs(vg[j].second - ys));
+           // int dist = max(abs(vg[j].first - xs), abs(vg[j].second - ys ));
+            int dist = abs(vg[j].first - xs) + abs(vg[j].second - ys );
            // int dist = max(smartDist(xv-1, vg[j].first - xs), smartDist(yv-1, vg[j].second - ys));
            beam.push_back(make_pair(dist, j));
         }
@@ -330,8 +344,8 @@ vector<pair<int, int> > nearOrder(const vector<pair<int, int> > &vg){
         for(int j = 0; j<min(int(beam.size()), 3); j++){
             if(beam[j].first - beam[0].first > 1)continue;
             int now = beam[j].second;
-            set<pair<int, int> > target;
-            target.insert(vg[now]);
+            vector<pair<int, int> > target;
+            target.push_back(vg[now]);
             auto res = dijkstra(xs, ys, xv, yv,  1e9, target, vg[now]);
             if(res.second.size() < mini){
                 mini = res.second.size();
