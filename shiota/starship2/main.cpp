@@ -69,6 +69,9 @@ vector<int> genHistory(map<State, Int> &ope, State next,  pair<int, int> s, pair
 }
  */
 pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBest, const vector<pair<int, int>> &tg, pair<int, int> g){
+    cerr << endl << "call dijkstra" << endl;
+    cerr << _sx << ' ' << _sy << ' ' << _vx << ' ' << _vy << ' ' << nowBest << ' ' << tg.size() << ' ' << g.first << ' ' << g.second << endl;
+    cerr << endl;
     map<State, Int> minCost;
     map<State, Int>  ope;
     priority_queue<pair<Int, State>> Q;
@@ -111,6 +114,7 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
             }
 
 
+            /*
             if(vx != 0 || vy != 0){
                 Int div =1;
                 if(vx != 0 && vy != 0){
@@ -120,7 +124,7 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
                     Int dpx = cur.px + (vx / div) * j;
                     Int dpy = cur.py + (vy / div) * j;
                     auto dp = make_pair(dpx, dpy);
-                    if(next.target[0] == dp){
+                    if(!next.target.empty() && next.target[0] == dp){
                         next.target.erase(next.target.begin());
                     }
                     if(dp == g){
@@ -130,7 +134,8 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
                     }
                 }
             }
-            if(next.target[0] == make_pair(next.px, next.py)){
+             */
+            if(!next.target.empty() && next.target[0] == make_pair(next.px, next.py)){
                 next.target.erase(next.target.begin());
             }
             if(next.py == g.second && next.px == g.first){
@@ -144,6 +149,7 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
                 ope[next] = i+1;
 
                 if(next.target.empty()){
+                    cerr << __LINE__ << ' ' << next.gp.first << ' ' << next.gp.second << endl;
                     return make_pair(next, next.history);
                 }
                 Q.push(make_pair(-nextCost, next));
@@ -151,6 +157,7 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
         }
     }
     if(best.found){
+        cerr << __LINE__ << ' ' << best.gp.first << ' ' << best.gp.second <<endl;
         return make_pair(best, best.history);
     }
     assert(false);
@@ -164,6 +171,7 @@ vector<Int> solveDijskstra(vector<pair<int, int> > &vg, int nowBest){
     Int vx = 0, vy = 0;
     vector<Int> ret;
     for(int i = 0; i<vg.size(); i++){
+        if(vg[i] == make_pair(sx, sy)) continue;
         vector<pair<int, int>> target;
         target.push_back(vg[i]);
         if(i < vg.size() - 1){

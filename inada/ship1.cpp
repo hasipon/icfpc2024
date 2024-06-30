@@ -9,14 +9,23 @@
 #include <set>
 #include <thread>
 #include <vector>
+#include <cstdlib>
 
 using namespace std;
 using namespace std::chrono;
 
+int envInt(const char* name, int defaultValue) {
+	auto s = getenv(name);
+	if (s != nullptr) {
+		return atoi(s);
+	}
+
+	return defaultValue;
+}
+
 using Int = long long;
 const Int dx[] = {-1, 0,  1, -1, 0, 1, -1, 0, 1};
 const Int dy[] = {-1, -1,  -1, 0, 0, 0, 1, 1, 1};
-
 using StageData = vector<pair<Int, Int>>;
 
 struct State {
@@ -47,16 +56,15 @@ double abs(pair<Int, Int> a) {
 	return sqrt(a.first * a.first + a.second * a.second);
 }
 
-
-template <typename T, unsigned N> class Ranking {
+template <typename T> class Ranking {
 public:
 	bool is_rankin(const T& value) {
-		return m_.size() < N ? true : min_element() < value;
+		return m_.size() < n ? true : min_element() < value;
 	}
 
 	void push(const T& value) {
 		m_.insert(value);
-		if (size() == N + 1) {
+		if (size() == n + 1) {
 			pop_min();
 		}
 	}
@@ -100,11 +108,11 @@ public:
 	[[nodiscard]] const std::multiset<T>& data() const { return m_; }
 
 private:
+	int n = envInt("WIDTH", 1000);
 	std::multiset<T> m_;
 };
 
 class ChokudaiSearch {
-	static constexpr int MaxTurn = 1000;
 public:
 	struct DirListNode {
 		uint8_t dir;
@@ -131,10 +139,11 @@ public:
 
 	explicit ChokudaiSearch(StageData stage_data, bool auto_target)
 		: stage_data_(std::move(stage_data)) {
-		ranking_.resize(MaxTurn+ 1);
-		bests_.resize(MaxTurn);
-		weak_hash_.resize(MaxTurn);
-		mutex_.resize(MaxTurn + 1);
+		int maxTurn = envInt("MAXTURN", 1000);
+		ranking_.resize(maxTurn+ 1);
+		bests_.resize(maxTurn);
+		weak_hash_.resize(maxTurn);
+		mutex_.resize(maxTurn + 1);
 		for (auto& m : mutex_) {
 			m = std::make_unique<std::mutex>();
 		}
@@ -185,8 +194,8 @@ public:
 			}
 		};
 
-		// const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
-		const auto n_thread = 1;
+		const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
+		// const auto n_thread = 1;
 		std::vector<std::thread> threads;
 		threads.reserve(n_thread);
 		for (int i = 0; i < n_thread; i++) {
@@ -206,7 +215,7 @@ private:
 			updated = false;
 
 			for (int depth = 0; depth < target_depth; ++depth) {
-				if (base_turn_ + depth == MaxTurn) {
+				if (base_turn_ + depth == bests_.size()) {
 					break;
 				}
 
@@ -285,12 +294,13 @@ private:
 		vx += dx[dir];
 		vy += dy[dir];
 
+		/*
 		if (vx != 0 && vy != 0) {
 			const auto num_p = gcd(abs(vx), abs(vy));
 			for (int dt = 0; dt < num_p; dt++) {
 				const auto xx = px + vx * dt / num_p;
 				const auto yy = py + vy * dt / num_p;
-				if (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
+				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
 					next_index++;
 				}
 			}
@@ -301,7 +311,7 @@ private:
 			for (int dt = 0; dt < num_p; dt++) {
 				const auto xx = px + vx * dt / num_p;
 				const auto yy = py;
-				if (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
+				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
 					next_index++;
 				}
 			}
@@ -312,14 +322,18 @@ private:
 			for (int dt = 0; dt < num_p; dt++) {
 				const auto xx = px;
 				const auto yy = py + vy * dt / num_p;
-				if (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
+				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
 					next_index++;
 				}
 			}
 		}
+		*/
 
 		px += vx;
 		py += vy;
+		while (stage_data_[next_index].first == px && stage_data_[next_index].second == py) {
+			next_index++;
+		}
 		return {px, py, vx, vy, next_index};
 	}
 
@@ -328,8 +342,9 @@ private:
 		const auto sp = next_index == 0 ? make_pair<Int, Int>(0, 0) : stage_data_[next_index - 1];
 		const auto w1 = abs(make_pair<Int, Int>(tp.first - px - vx, tp.second - py - vy));
 		const auto w2 = abs(make_pair<Int, Int>(tp.first - sp.first, tp.second - sp.second));
-		// return 1000.0 * (next_index + (1.0 - w1 / w2));
-		return 1000.0 * next_index;
+		return 1000.0 * (next_index + (1.0 - w1/w2));
+		// return 10000.0 * next_index - w1;
+		// return 1000.0 * next_index;
 	}
 
 	static uint64_t Hash(Int px, Int py, Int vx, Int vy, int next_index) {
@@ -349,7 +364,7 @@ public:
 	StageData stage_data_;
 	std::vector<std::array<uint64_t, 1 << 16>> weak_hash_;
 	std::vector<SearchNode> bests_;
-	std::vector<Ranking<SearchNode, 10000>> ranking_;
+	std::vector<Ranking<SearchNode>> ranking_;
 	std::vector<std::unique_ptr<std::mutex>> mutex_;
 	std::mutex g_mutex_;
 };
@@ -364,8 +379,8 @@ int main(int argc, char *argv[]) {
     auto vg = input(ifs);
     ifs.close();
 
-	ChokudaiSearch cs(vg, true);
-	cs.Run(200, 20 * 1000);
+	ChokudaiSearch cs(vg, false);
+	cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 60 * 1000));
 	auto bests = cs.GetBests();
 	vector<int> moves;
 	for (const auto& best : bests) {
@@ -377,18 +392,17 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	reverse(moves.begin(), moves.end());
-	for (auto dir : moves) {
-		cout << dir;
-	}
-	cout << endl;
-
-	if (moves.empty()) {
-		auto& best = *max_element(bests.begin(), bests.end(),
-			[](const auto& a, const auto& b) {
-			return a.next_index < b.next_index;
-		});
-		cerr << "Not found ... next_index=" << best.next_index << endl;
+	if (!moves.empty()) {
+		cerr << "score: " << moves.size() << endl;
+		reverse(moves.begin(), moves.end());
+		for (auto dir: moves) {
+			cout << dir;
+		}
+		cout << endl;
+	} else {
+		// auto& best = *max_element(bests.begin(), bests.end(), [](const auto& a, const auto& b) { return a.next_index < b.next_index; });
+		auto& best = bests.back();
+		cerr << "Not found ... next_index=" << best.next_index << " score=" << best.score << endl;
 		cerr << cs.stage_data_[best.next_index].first << " " << cs.stage_data_[best.next_index].second << endl;
 		for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
 			moves.push_back(ptr->dir + 1);
