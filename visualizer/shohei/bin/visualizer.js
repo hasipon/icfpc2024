@@ -86,7 +86,7 @@ Main.main = function() {
 Main.refresh = function() {
 	var form = window.document.getElementById("problem");
 	var problem = Main.problems[Std.parseInt(form.value) - 1];
-	Main.state = { moves : []};
+	Main.state = { x : problem.startX, y : problem.startY, moves : []};
 	Main.draw();
 };
 Main.draw = function() {
@@ -105,20 +105,16 @@ Main.draw = function() {
 		_g.push(b);
 	}
 	var remains = _g;
-	var sx = problem.startX;
-	var sy = problem.startY;
-	remains[sx + sy * problem.width] = false;
+	Main.state.x = problem.startX;
+	Main.state.y = problem.startY;
+	remains[Main.state.x + Main.state.y * problem.width] = false;
 	var move = function(dx,dy,len) {
 		var _g = 0;
 		var _g1 = len;
 		while(_g < _g1) {
 			var _ = _g++;
-			var nextX = sx + dx;
-			var nextY = sy + dy;
-			if(0 <= nextX && nextX < problem.width && 0 <= nextY && nextY < problem.height && problem.roads[nextX + nextY * problem.width]) {
-				remains[nextX + nextY * problem.width] = false;
-				sx = nextX;
-				sy = nextY;
+			if(Main.tryMove(dx,dy)) {
+				remains[Main.state.x + Main.state.y * problem.width] = false;
 			} else {
 				break;
 			}
@@ -170,7 +166,7 @@ Main.draw = function() {
 				Main.problemGraphics.beginFill(16776960);
 				Main.problemGraphics.drawCircle((x + 0.5) * scale,(y + 0.5) * scale,scale / 5);
 			}
-			if(sx == x && sy == y) {
+			if(Main.state.x == x && Main.state.y == y) {
 				Main.problemGraphics.beginFill(16711680);
 				Main.problemGraphics.drawCircle((x + 0.5) * scale,(y + 0.5) * scale,scale / 3);
 			}
@@ -188,36 +184,79 @@ Main.draw = function() {
 	form.innerHTML = result;
 };
 Main.keyDown = function(e) {
-	switch(e.keyCode) {
-	case 65:
-		Main.addMove(e.shiftKey ? "L" : "l");
-		e.preventDefault();
-		break;
-	case 68:case 69:
-		Main.addMove(e.shiftKey ? "R" : "r");
-		e.preventDefault();
-		break;
-	case 79:case 83:
-		Main.addMove(e.shiftKey ? "D" : "d");
-		e.preventDefault();
-		break;
-	case 82:
-		Main.reset();
-		e.preventDefault();
-		break;
-	case 90:
-		Main.undo();
-		e.preventDefault();
-		break;
-	case 87:case 188:
-		Main.addMove(e.shiftKey ? "U" : "u");
-		e.preventDefault();
-		break;
+	if(!e.ctrlKey) {
+		switch(e.keyCode) {
+		case 65:
+			Main.addMove(e.shiftKey ? "L" : "l");
+			e.preventDefault();
+			break;
+		case 68:case 69:
+			Main.addMove(e.shiftKey ? "R" : "r");
+			e.preventDefault();
+			break;
+		case 79:case 83:
+			Main.addMove(e.shiftKey ? "D" : "d");
+			e.preventDefault();
+			break;
+		case 82:
+			Main.reset();
+			e.preventDefault();
+			break;
+		case 90:
+			Main.undo();
+			e.preventDefault();
+			break;
+		case 87:case 188:
+			Main.addMove(e.shiftKey ? "U" : "u");
+			e.preventDefault();
+			break;
+		}
 	}
 };
 Main.addMove = function(move) {
-	Main.state.moves.push(move);
-	Main.draw();
+	var success;
+	switch(move) {
+	case "D":
+		success = Main.tryMove(0,1);
+		break;
+	case "L":
+		success = Main.tryMove(-1,0);
+		break;
+	case "R":
+		success = Main.tryMove(1,0);
+		break;
+	case "U":
+		success = Main.tryMove(0,-1);
+		break;
+	case "d":
+		success = Main.tryMove(0,1);
+		break;
+	case "l":
+		success = Main.tryMove(-1,0);
+		break;
+	case "r":
+		success = Main.tryMove(1,0);
+		break;
+	case "u":
+		success = Main.tryMove(0,-1);
+		break;
+	}
+	if(success) {
+		Main.state.moves.push(move);
+		Main.draw();
+	}
+};
+Main.tryMove = function(dx,dy) {
+	var form = window.document.getElementById("problem");
+	var problem = Main.problems[Std.parseInt(form.value) - 1];
+	var nextX = Main.state.x + dx;
+	var nextY = Main.state.y + dy;
+	if(0 <= nextX && nextX < problem.width && 0 <= nextY && nextY < problem.height && problem.roads[nextX + nextY * problem.width]) {
+		Main.state.x = nextX;
+		Main.state.y = nextY;
+		return true;
+	}
+	return false;
 };
 Main.undo = function() {
 	Main.state.moves.pop();
