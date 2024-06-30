@@ -24,7 +24,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="False" />
-    <option additional="" />
+    <option additional="--macro Macro.init()" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -47,7 +47,7 @@
   <options>
     <option showHiddenPaths="False" />
     <option testMovie="OpenDocument" />
-    <option testMovieCommand="http://localhost:2000/visualizer/index.html" />
+    <option testMovieCommand="http://localhost:2000/index.html" />
   </options>
   <!-- Plugin storage -->
   <storage />

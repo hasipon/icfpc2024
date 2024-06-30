@@ -40,10 +40,6 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     const W = max_x - min_x;
     const H = max_y - min_y;
 
-    console.log(min_x, min_y, max_x, max_y);
-    console.log(W, H);
-    console.log(stage);
-
     if (W <= 0 || H <= 0) {
         return;
     }
@@ -71,32 +67,6 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         px += vx;
         py += vy;
         targets.delete(`${px}_${py}`);
-
-        if (vx == 0 && vy !== 0) {
-            const num_p = Math.abs(vy);
-            for (let dt = 0; dt < num_p; dt++) {
-                const xx = px;
-                const yy = py - vy * (dt + 1) / num_p;
-                targets.delete(`${xx}_${yy}`);
-            }
-        } else if (vx !== 0 && vy == 0) {
-            const num_p = Math.abs(vx);
-            for (let dt = 0; dt < num_p; dt++) {
-                const xx = px - vx * (dt + 1) / num_p;
-                const yy = py;
-                targets.delete(`${xx}_${yy}`);
-            }
-        } else if (vx !== 0 && vy !== 0) {
-            const gcd = (x:number, y:number): number => {
-                return x % y ? gcd(y, x % y) : y;
-            };
-            const num_p = gcd(Math.abs(vx), Math.abs(vy));
-            for (let dt = 0; dt < num_p; dt++) {
-                const xx = px - vx * (dt + 1) / num_p;
-                const yy = py - vy * (dt + 1) / num_p;
-                targets.delete(`${xx}_${yy}`);
-            }
-        }
     }
 
     const svgChildren = [];
