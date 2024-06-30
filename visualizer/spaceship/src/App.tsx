@@ -40,10 +40,6 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     const W = max_x - min_x;
     const H = max_y - min_y;
 
-    console.log(min_x, min_y, max_x, max_y);
-    console.log(W, H);
-    console.log(stage);
-
     if (W <= 0 || H <= 0) {
         return;
     }
