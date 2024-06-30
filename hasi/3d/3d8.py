@@ -1,17 +1,17 @@
 def solve(a):
     x = 2
+    c = a
+    s = 0
     while True:
-        c = a
-        s = 0
-        while True:
-            if c == 0:
-                if s == a:
-                    return x
-                break
-            else:
-                c, r = divmod(c, x)
-                s = s * x + r
-        x += 1
+        if c == 0:
+            if s == a:
+                return x
+            x += 1
+            c = a
+            s = 0
+        else:
+            c, r = divmod(c, x)
+            s = s * x + r
 
 
 def main():
