@@ -1,6 +1,6 @@
 import sys
 from collections import defaultdict
-
+sys.set_int_max_str_digits(1000000)
 
 def div(x, y):
     v = abs(x) // abs(y)
@@ -152,7 +152,7 @@ class Main:
                         raise Exception(f'conflict {pos} {v} {x}')
                     v = x
             if v is not None:
-                if new_f.get(pos) == 'S':
+                if f.get(pos) == 'S':
                     submitted.add(v)
                 new_f[pos] = v
             elif d:
