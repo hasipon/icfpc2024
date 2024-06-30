@@ -81,7 +81,8 @@ for i in range(11, 22):
                 
         if valid:
             data = convint(enc)
-            msg = '''B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I# BD B* I# B% vd I% S{keys} S{header} I{data}'''
+            msg = '''
+                B$ B$ La B$ va va Lr Ld ? B> vd I! B. B$ B$ vr vr B/ vd I% BT I# BD B* I# B% vd I% S{keys} S{header} I{data}'''
             msg = msg.format(
                 data = convint(enc),
                 header = ''.join(chr(tbl.index(x)+33) for x in header),
