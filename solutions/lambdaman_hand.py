@@ -46,7 +46,15 @@ for i in range(16, 17):
             else:
                 enc += data.index(c.upper()) * 2 + 1
 
-        msg = ''''''
+        msg = '''
+B~
+    B~ 
+        Lu B~
+            B~ La B~ va va
+            Lr Ld
+            I{data}
+'''
+        msg = re.sub("[\n\r \s]+", " ", msg).strip()
         msg = msg.format(
             data = convint(enc),
             header = ''.join(chr(tbl.index(x)+33) for x in header),

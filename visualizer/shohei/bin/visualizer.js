@@ -131,16 +131,16 @@ Main.draw = function() {
 		++_g;
 		switch(m) {
 		case "D":
-			move(0,1,1);
+			move(0,1,problem.stepSize);
 			break;
 		case "L":
-			move(-1,0,1);
+			move(-1,0,problem.stepSize);
 			break;
 		case "R":
-			move(1,0,1);
+			move(1,0,problem.stepSize);
 			break;
 		case "U":
-			move(0,-1,1);
+			move(0,-1,problem.stepSize);
 			break;
 		case "d":
 			move(0,1,problem.problemSize);
@@ -189,12 +189,12 @@ Main.draw = function() {
 };
 Main.keyDown = function(e) {
 	switch(e.keyCode) {
-	case 68:
-		Main.addMove(e.shiftKey ? "R" : "r");
+	case 65:
+		Main.addMove(e.shiftKey ? "L" : "l");
 		e.preventDefault();
 		break;
-	case 65:case 69:
-		Main.addMove(e.shiftKey ? "L" : "l");
+	case 68:case 69:
+		Main.addMove(e.shiftKey ? "R" : "r");
 		e.preventDefault();
 		break;
 	case 79:case 83:
