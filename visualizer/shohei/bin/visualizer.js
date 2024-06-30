@@ -189,28 +189,28 @@ Main.draw = function() {
 };
 Main.keyDown = function(e) {
 	switch(e.keyCode) {
-	case 65:
+	case 68:
+		Main.addMove(e.shiftKey ? "R" : "r");
+		e.preventDefault();
+		break;
+	case 65:case 69:
 		Main.addMove(e.shiftKey ? "L" : "l");
 		e.preventDefault();
 		break;
-	case 68:
-		Main.addMove(e.shiftKey ? "R" : "r");
+	case 79:case 83:
+		Main.addMove(e.shiftKey ? "D" : "d");
 		e.preventDefault();
 		break;
 	case 82:
 		Main.reset();
 		e.preventDefault();
 		break;
-	case 83:
-		Main.addMove(e.shiftKey ? "D" : "d");
-		e.preventDefault();
-		break;
-	case 87:
-		Main.addMove(e.shiftKey ? "U" : "u");
-		e.preventDefault();
-		break;
 	case 90:
 		Main.undo();
+		e.preventDefault();
+		break;
+	case 87:case 188:
+		Main.addMove(e.shiftKey ? "U" : "u");
 		e.preventDefault();
 		break;
 	}

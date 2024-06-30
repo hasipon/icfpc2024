@@ -221,9 +221,9 @@ class Main
 	{
 		switch e.keyCode
 		{
-			case KeyboardEvent.DOM_VK_W    : addMove(if (e.shiftKey) Move.U else Move.u); e.preventDefault();
-			case KeyboardEvent.DOM_VK_S    : addMove(if (e.shiftKey) Move.D else Move.d); e.preventDefault();
-			case KeyboardEvent.DOM_VK_A    : addMove(if (e.shiftKey) Move.L else Move.l); e.preventDefault();
+			case KeyboardEvent.DOM_VK_W | KeyboardEvent.DOM_VK_COMMA: addMove(if (e.shiftKey) Move.U else Move.u); e.preventDefault();
+			case KeyboardEvent.DOM_VK_S | KeyboardEvent.DOM_VK_O    : addMove(if (e.shiftKey) Move.D else Move.d); e.preventDefault();
+			case KeyboardEvent.DOM_VK_A | KeyboardEvent.DOM_VK_E    : addMove(if (e.shiftKey) Move.L else Move.l); e.preventDefault();
 			case KeyboardEvent.DOM_VK_D    : addMove(if (e.shiftKey) Move.R else Move.r); e.preventDefault();
 			case KeyboardEvent.DOM_VK_Z    : undo(); e.preventDefault();
 			case KeyboardEvent.DOM_VK_R    : reset(); e.preventDefault();
