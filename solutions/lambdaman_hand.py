@@ -3,6 +3,8 @@ import sys
 import requests
 import time
 import glob
+import re
+
 print("start")
 tbl = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&\'()*+,-./:;<=>?@[\\]^_`|~ \n"
 
@@ -14,14 +16,14 @@ def convint(n):
 	return r
 
 for i in range(1, 22):
-    header = echo #"solve lambdaman" + str(i) + " "
+    header = "solve lambdaman" + str(i) + " "
     min = ""
     min_file = ""
     min_method = ""
     for file in glob.glob('lambdaman/' + str(i) + '-*.hand'):
         f = open(file, "r")
-        problem_size = f.readline().replace("\n", "").replace("\r", "")
-        step_size = f.readline().replace("\n", "").replace("\r", "")
+        problem_size = int(f.readline().replace("\n", "").replace("\r", ""))
+        step_size = int(f.readline().replace("\n", "").replace("\r", ""))
         body = f.readline().replace("\n", "").replace("\r", "")
         f.close()
         
@@ -53,33 +55,36 @@ for i in range(1, 22):
         msg = '''
 B~
     Lu 
-        B~ 
-            B~
-                B~ La B~ va va
+        B~
+            B~ 
+                La B~ va va
                 Lr Ld
                     ? B= vd I!
                         S{header}
                         B.
                             B~ B~ vr vr B/ vd I)
-                            B~ B~ B~ vu vu 
+                            B~ B~ B~ vu
+                                vu 
                                 B% B/ vd I# I%
                                 ? B= B% vd I# I!
                                     I{step_size}
                                     I{problem_size}
             I{data}
-    B~
-        Lr Ll Ln 
-            ? B< Ln I"
-                S
-                B.
-                    BT 1 BD B% Ll I" S{keys}
-                    B~ B~ B~ vr vr vl B- vn I"
+    Lr Ll Ln 
+        ? B< vn I"
+            S
+            B.
+                BT I" BD B% vl I% S{keys}
+                B~ B~ B~ vr vr vl B- vn I"
+
 '''
         msg = re.sub("[\n\r \s]+", " ", msg).strip()
         msg = msg.format(
             data = convint(enc),
             header = ''.join(chr(tbl.index(x)+33) for x in header),
-            keys = keys
+            keys = keys,
+            step_size = convint(step_size),
+            problem_size = convint(problem_size),
         )
         update(
             msg,
@@ -92,6 +97,7 @@ B~
         print(min)
         res = requests.post("https://boundvariable.space/communicate", headers={"Authorization":"Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=min)
         assert res.ok
+        print(res.text)
         result = ''.join(tbl[ord(x)-33] for x in res.text[1:])
         print(result)
         time.sleep(3)
