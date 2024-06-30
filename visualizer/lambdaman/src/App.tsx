@@ -93,6 +93,7 @@ function App() {
     const [solutionList, setSolutionList] = useState<Solution[]>([]);
     const [selectedSolution, setSelectedSolution] = useState<number>(0);
     const [inputText, setInputText] = useState<string>("###.#...\n" + "...L..##\n" + ".#######");
+    const [movesText, setMovesText] = useState<string>("");
     const [outputText, setOutputText] = useState<string>("");
     const [time, setTime] = useState<number>(3);
 
@@ -125,7 +126,7 @@ function App() {
             const matches = resp.data.matchAll(regex);
             const list :Solution[] = [{fileName: "None", size:0}];
             for (const match of matches) {
-                if (match[1].startsWith("" + problemNo + "-")) {
+                if (match[1].startsWith(`${problemNo}-`) && match[1].endsWith(".icfp")) {
                     list.push({fileName: match[1], size:Number(match[2])} as Solution);
                 }
             }
@@ -152,8 +153,13 @@ function App() {
             if (resp.status !== 200) {
                 return;
             }
-
             setOutputText(resp.data.trim());
+
+            const resp2 = await axios.get<string>("http://34.146.140.6/repo/solutions/lambdaman/" + s.fileName.replace(".icfp", ".txt"), { responseType: "text" });
+            if (resp2.status !== 200) {
+                return;
+            }
+            setMovesText(resp2.data.trim());
         };
 
         update();
@@ -186,9 +192,9 @@ function App() {
                         {solutionList.map((s, index) => <MenuItem key={s.fileName} value={index}>{"[" + s.size + "] " + s.fileName}</MenuItem>)}
                     </Select>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={2}>
                     <TextField
-                        sx={{display: "flex"}}
+                        sx={{display: "flex", margin:1}}
                         variant="outlined"
                         label="入力"
                         multiline
@@ -199,17 +205,28 @@ function App() {
                         value={inputText}
                     />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={10}>
                     <TextField
-                        sx={{display: "flex"}}
+                        sx={{display: "flex", margin:1}}
                         variant="outlined"
-                        label="出力"
+                        label="ICFP"
                         multiline
                         rows="1"
                         onChange={(e) => {
                             setOutputText(e.target.value);
                         }}
                         value={outputText}
+                    />
+                    <TextField
+                        sx={{display: "flex", margin:1}}
+                        variant="outlined"
+                        label="MOVES"
+                        multiline
+                        rows="1"
+                        onChange={(e) => {
+                            setMovesText(e.target.value);
+                        }}
+                        value={movesText}
                     />
                 </Grid>
                 <Grid item m={1} xs={6}>
@@ -240,7 +257,7 @@ function App() {
                 <Grid item xs={12}>
                     <SvgContent
                         field={inputText}
-                        solution={outputText}
+                        solution={movesText}
                         time={time}/>
                 </Grid>
             </Grid>
