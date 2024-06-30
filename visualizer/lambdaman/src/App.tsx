@@ -98,8 +98,8 @@ function App() {
     const [time, setTime] = useState<number>(3);
 
     useEffect(() => {
-        setTime(outputText.length);
-    }, [outputText])
+        setTime(movesText.length);
+    }, [movesText])
 
     useEffect(() => {
         const update = async () => {
