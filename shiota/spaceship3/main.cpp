@@ -38,8 +38,8 @@ public:
 // 経路をもつのでなく、復元する
 // 正負まとめる
 map<int, vector<OneDState>> solve1D(const int _v, const int _dist,  map<int, int> comm){
-    const int vLimit = max(sqrt(abs(_dist)), 100.);
-    const int pLimit = max(abs(_dist)*2 + _v*_v, 100);
+    const int vLimit = max(sqrt(abs(_dist)), 10.);
+    const int pLimit = max(abs(_dist)*2 + _v*_v, 10);
 
     map<OneDState, int> minCost;
     priority_queue<pair<int, OneDState>> Q;
@@ -61,7 +61,7 @@ map<int, vector<OneDState>> solve1D(const int _v, const int _dist,  map<int, int
         int cost = -Q.top().first;
         OneDState cur = Q.top().second;
         Q.pop();
-        // if(minCost[cur] < cost) continue;
+         if(minCost[cur] < cost) continue;
         if(cur.p == _dist){
             ret[cost].push_back(cur);
             if(cur.v == 0){
