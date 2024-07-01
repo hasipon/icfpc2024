@@ -38,7 +38,7 @@ public:
 // 経路をもつのでなく、復元する
 // 正負まとめる
 map<int, vector<OneDState>> solve1D(const int _v, const int _dist,  map<int, int> comm){
-    const int vLimit = max(sqrt(abs(_dist)), 10.);
+    const int vLimit = max(int(sqrt(abs(_dist))), _v);
     const int pLimit = max(abs(_dist)*2 + _v*_v, 10);
 
     map<OneDState, int> minCost;
@@ -95,6 +95,7 @@ vector<int> solveDijskstra(const vector<pair<int, int> > &vg, const int nowBest)
     cerr << "nowBest " << nowBest <<endl;
     const int beam = 100;
 
+    TwoDState last;
     auto nowState = vector<TwoDState>(1, {{0, 0}, {0, 0}, vector<int>()});
     for(int posi = 0; posi<vg.size(); posi++) {
         auto nextPos = vg[posi];
@@ -167,7 +168,18 @@ vector<int> solveDijskstra(const vector<pair<int, int> > &vg, const int nowBest)
                 nowState.push_back(nextState[i]);
             }
         }
+        if(!nowState.empty()){
+            last = nowState[0];
+        }
         cerr << "step == " << posi  << " nowState.size() " << nowState.size() << endl;
+    }
+    if(nowState.empty()){
+        cerr << "failed "<<endl;
+        for(int i = 0; i < last.history.size(); i++){
+            cerr << last.history[i];
+        }
+        cerr << endl;
+        return last.history;
     }
     return nowState[0].history;
 }
