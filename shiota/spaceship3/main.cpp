@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <string>
 #include <queue>
 #include <set>
 
@@ -90,6 +91,7 @@ map<int, vector<OneDState>> solve1D(const int _v, const int _dist,  map<int, int
 
 
 vector<int> solveDijskstra(const vector<pair<int, int> > &vg, const int nowBest){
+    cerr << "vg size " << vg.size() <<endl;
     cerr << "nowBest " << nowBest <<endl;
     const int beam = 100;
 
@@ -176,6 +178,8 @@ vector<pair<int, int>> input(){
     int x, y;
     set<pair<int, int>> used;
     used.insert(make_pair(0, 0));
+    string hoge;
+    getline(cin, hoge);
     while(cin >> x >> y){
         if(used.count(make_pair(x, y))) continue;
         vg.push_back(make_pair(x, y));
@@ -282,7 +286,9 @@ int main() {
     vector<vector<int>> anss;
     int nowBest = 1000001;
     auto vg = (input());
+    updateAnss(anss, solveDijskstra(vg, nowBest), nowBest);
 
+    /*
     // x_order
     {
         vector<pair<int, int> > xo = vg;
