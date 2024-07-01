@@ -7,11 +7,11 @@ def solve(a):
             if s == a:
                 return x
             x += 1
-            c = a
             s = 0
+            c = a
         else:
-            c, r = divmod(c, x)
-            s = s * x + r
+            s = s * x + c % x
+            c //= x
 
 
 def main():
