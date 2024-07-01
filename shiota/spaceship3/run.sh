@@ -5,7 +5,7 @@ run_problem() {
   # OUTPUT_FILE="$1"-shiota-sorted-"$2".in
   echo "start $1";
     echo -n "solve spaceship$1 "  > "$OUTPUT_FILE"
-    ./main < ../../problems/spaceship/"$1".txt  >> "$OUTPUT_FILE"
+    ./main < ../../problems/spaceship_tsp/"$1".txt  >> "$OUTPUT_FILE"
     echo ""
   echo "end $1";
 }
