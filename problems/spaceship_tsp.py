@@ -1,5 +1,11 @@
 import os
-from python_tsp.heuristics import solve_tsp_simulated_annealing, solve_tsp_local_search
+import sys
+
+from python_tsp.heuristics import (
+    solve_tsp_simulated_annealing,
+    solve_tsp_local_search,
+    solve_tsp_lin_kernighan,
+    solve_tsp_record_to_record)
 from python_tsp.distances.data_processing import process_input
 
 
@@ -14,6 +20,13 @@ def save_tsp(f, points, permutation, distance):
             continue
         x, y = points[permutation[i]]
         f.write(f"{x} {y}\n")
+
+
+def find_distance_memo(f):
+    key = "# distance="
+    for line in f:
+        if line.startswith(key):
+            return float(line[len(key):])
 
 
 def solve_first_time(prob_no: int):
@@ -55,36 +68,37 @@ def improve(prob_no: int):
         points = [tuple(map(int, line.strip().split())) for line in f if not line.startswith("#")]
 
     with open(tsp_path) as f:
-        key = "# distance="
-        for line in f:
-            if line.startswith(key):
-                prev_distance = float(line[len(key):])
+        prev_distance = find_distance_memo(f)
 
     if not prev_distance or not points:
         return
 
-    print(prev_distance)
-    print(points)
-    print(len(points))
+    print(f"start improving problem{prob_no} points={len(points)} distance={prev_distance}")
     points.insert(0, (0, 0))
     sources, _ = process_input(points)
     distance_matrix = max_xy_distance(sources)
     distance_matrix[:, 0] = 0
-    permutation, distance = solve_tsp_local_search(
+    permutation, distance = solve_tsp_lin_kernighan(
         distance_matrix,
-        max_processing_time=60.0 * 5,
+        x0=[x for x in range(len(points))],
+        #max_processing_time=60.0 * 5,
     )
 
-    if distance < prev_distance:
-        print("improved", prob_no, prev_distance, distance)
+    with open(tsp_path) as f:
+        prev_distance = find_distance_memo(f)
 
+    if distance < prev_distance:
+        print(f"improved problem={prob_no} prev={prev_distance} distance={distance} improved={distance-prev_distance}")
         with open(tsp_path, "w") as f:
             save_tsp(f, points, permutation, distance)
 
 
 def main():
-    for i in range(5, 6):
-        improve(i)
+    if 1 < len(sys.argv):
+        improve(int(sys.argv[1]))
+    else:
+        for i in range(11, 26):
+            improve(i)
 
 
 if __name__ == "__main__":
