@@ -162,3 +162,51 @@
 
 ;; B$ Lz B. B$ B$ B$ vz I$9]Lx ImS IYL B$ B$ B$ vz I%FaUY ILd Itr7O Ls Lm Lf B$ B$ Ly B$ vy vy Lr Lx ? B= vx vf S B. BT I" BD B% vx I% SL>OF B$ B$ vr vr B% B* vx vm I-jqaj vs
 ;; B$ Lz B. B$ B$ B$ vz I$9]Lx Ims IYL B$ B$ B$ vz I%FaUY ILd Itr7O Ls Lm Lf B$ B$ Ly B$ vy vy Lr Lx ? B= vx vf S B. BT I" BD B% vx I% SL>OF B$ B$ vr vr B% B* vx vm I-jqaj vs
+
+;;
+
+
+
+;; ini, mult, mod, fin
+;; ((737537172,1718),998244353) 988556037
+;; 737537172 I*J|W-
+;; 1718 I3;
+;; 998244353 I-jqaj
+;; 988556037 I-_36X
+
+(funcall (funcall (lambda (y) (funcall y y))
+                  (lambda (rec)
+                    (lambda (x)
+                      (if (= x 1024)
+                          ""
+                        (s-concat (take 1 (drop (% x 4) "RDUL"))
+                                  (funcall (funcall rec rec) (% (* x 2) 998244353)))))))
+         1)
+
+;; B$ B$ Ly B$ vy vy Lr Lx ? B= vx I-_36X S B. BT I" BD B% vx I% SL>OF B$ B$ vr vr B% B* vx I3; I-jqaj I*J|W-
+
+
+;; B$ B$ Ly B$ vy vy
+;; Lr
+;; Lx
+;; ? B= vx I-_36X
+;; S
+;; B. BT I" BD B% vx I% SL>OF
+;; B$ B$ vr vr B% B* vx 2 I-jqaj
+;; I*J|W-
+
+;; B$ B$ Ly B$ vy vy Lr Lx ? B= vx I-_36X S B. BT I" BD B% vx I% SL>OF B$ B$ vr vr B% B* vx I3; I-jqaj I*J|W-
+
+
+;; 3/,6%},!-"$!-!.V\}
+
+;; DONE: (A,B)1
+;; ini, mult, mod, fin
+;; ((737537172,1718),998244353) 4096
+;; 737537172 I*J|W-
+;; 1718 I3;
+;; 998244353 I-jqaj
+;; 450974094 I&i{9g
+
+
+B$ B$ Ly B$ vy vy Lr Lx ? B= vx I&i{9g S3/,6%},!-"$!-!.V\} B. B$ B$ vr vr B% B* vx I3; I-jqaj BT I" BD B% vx I% SL>OF I*J|W-
