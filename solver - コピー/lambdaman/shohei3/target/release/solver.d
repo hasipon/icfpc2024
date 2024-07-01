@@ -1,0 +1,1 @@
+C:\Users\909mm\work\icfpc2024\solver\lambdaman\shohei2\target\release\solver.exe: C:\Users\909mm\work\icfpc2024\solver\lambdaman\shohei2\src\data.rs C:\Users\909mm\work\icfpc2024\solver\lambdaman\shohei2\src\main.rs

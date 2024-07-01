@@ -1,5 +1,5 @@
 import {memo, useEffect, useState} from 'react'
-import {Grid, Input, MenuItem, Select, Slider, TextField} from "@mui/material";
+import {Checkbox, FormControlLabel, FormGroup, Grid, Input, MenuItem, Select, Slider, TextField} from "@mui/material";
 import axios from "axios";
 import './App.css'
 
@@ -8,7 +8,14 @@ const solutionToMoves = (solution: string) : string => {
     return solution.replace(pattern, "").trim();
 }
 
-const SvgContent = memo((props: {input: string, solution: string, time: number}) => {
+const SvgContent = memo((
+    props: {
+        input: string,
+        solution: string,
+        time: number,
+        displayProblemLine: boolean
+        displayHistoryLine: boolean
+    }) => {
     let t = props.time;
     if (t < 0) {
         t = 0;
@@ -18,7 +25,12 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         return;
     }
 
-    const stage = props.input.trim().split(/\r?\n/).map(line => line.split(" ").map(v => Number(v)));
+    const stage = props.input.trim()
+        .split(/\r?\n/)
+        .filter(line => !line.startsWith("#"))
+        .map(line => line.split(" ")
+            .map(v => Number(v)));
+
     if (!stage) {
         return;
     }
@@ -39,10 +51,18 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
 
     const W = max_x - min_x;
     const H = max_y - min_y;
+    const flip_y = (y: number) => max_y - (y - min_y);
+    const r = 0.5 + Math.max(W,H) / 1024;
+    const pad = 10;
 
     if (W <= 0 || H <= 0) {
         return;
     }
+
+    const svgChildren = [];
+    svgChildren.push(
+        <rect key={"rect_bg"} x={min_x-pad} y={min_y-pad} width={W+pad*2} height={H+pad*2} fill={"#CCCCCC"}></rect>
+    );
 
     let px = 0, py = 0;
     let vx = 0, vy = 0;
@@ -64,19 +84,26 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
         const [ax, ay] = get_a(moves[i]);
         vx += ax;
         vy += ay;
+
+        if (props.displayHistoryLine) {
+            const x1 = px;
+            const y1 = py;
+            const x2 = px + vx;
+            const y2 = py + vy;
+            svgChildren.push(
+                <line key={`history_line_${i}`}
+                      x1={x1} y1={flip_y(y1)}
+                      x2={x2} y2={flip_y(y2)}
+                      stroke={"blue"}
+                      strokeWidth={r / 2}
+                />
+            );
+        }
+
         px += vx;
         py += vy;
         targets.delete(`${px}_${py}`);
     }
-
-    const svgChildren = [];
-    const r = 0.5 + Math.max(W,H) / 1024;
-    const pad = 10;
-    const flip_y = (y: number) => max_y - (y - min_y);
-
-    svgChildren.push(
-        <rect key={"rect_bg"} x={min_x-pad} y={min_y-pad} width={W+pad*2} height={H+pad*2} fill={"#CCCCCC"}></rect>
-    );
 
     for (let i = 0; i < stage.length; i++) {
         const x = stage[i][0];
@@ -89,6 +116,23 @@ const SvgContent = memo((props: {input: string, solution: string, time: number})
     svgChildren.push(
         <circle key={"player"} cx={px} cy={flip_y(py)} r={r} fill={"#CC0000"}/>
     );
+
+    if (props.displayProblemLine) {
+        for (let i = 0; i < stage.length; i++) {
+            const x1 = stage[i][0];
+            const y1 = stage[i][1];
+            const x2 = i == 0 ? 0 : stage[i - 1][0];
+            const y2 = i == 0 ? 0 : stage[i - 1][1];
+            svgChildren.push(
+                <line key={`problem_line_${i}`}
+                      x1={x1} y1={flip_y(y1)}
+                      x2={x2} y2={flip_y(y2)}
+                      stroke={"yellow"}
+                      strokeWidth={r/2}
+                />
+            );
+        }
+    }
 
     svgChildren.push(
         <line key={"line_v"} x1={px} y1={flip_y(py)} x2={px+vx} y2={flip_y(py+vy)} strokeWidth={r/2} stroke={"#CC0000"}></line>
@@ -117,6 +161,8 @@ function App() {
     const [inputText, setInputText] = useState<string>("");
     const [outputText, setOutputText] = useState<string>("");
     const [time, setTime] = useState<number>(3);
+    const [displayHistoryLine, setDisplayHistoryLine] = useState<boolean>(false);
+    const [displayProblemLine, setDisplayProblemLine] = useState<boolean>(false);
 
     useEffect(() => {
         setTime(solutionToMoves(outputText).length);
@@ -124,7 +170,7 @@ function App() {
 
     useEffect(() => {
         const update = async () => {
-            const resp = await axios.get<string>("http://34.146.140.6/repo/problems/spaceship/" + problemNo + ".txt");
+            const resp = await axios.get<string>("http://34.146.140.6/repo/problems/spaceship_tsp/" + problemNo + ".txt");
             if (resp.status !== 200) {
                 return;
             }
@@ -190,7 +236,7 @@ function App() {
     return (
         <>
             <Grid container>
-                <Grid item m={0} xs={6}>
+                <Grid item m={0} xs={2}>
                     <Input
                         type="number"
                         value={problemNo}
@@ -202,6 +248,20 @@ function App() {
                         }}
                     />
                 </Grid>
+                <Grid item m={0} xs={2}>
+                    <FormGroup>
+                        <FormControlLabel control={<Checkbox onChange={() => {
+                            setDisplayProblemLine(!displayProblemLine);
+                        }}/> } label="Problem"/>
+                    </FormGroup>
+                </Grid>
+                <Grid item m={0} xs={2}>
+                    <FormGroup>
+                        <FormControlLabel control={<Checkbox onChange={() => {
+                            setDisplayHistoryLine(!displayHistoryLine);
+                        }}/> } label="History"/>
+                    </FormGroup>
+                </Grid>
                 <Grid item m={0} xs={6}>
                     <Select
                         sx={{display: "flex"}}
@@ -211,7 +271,8 @@ function App() {
                             setSelectedSolution(v);
                         }}
                     >
-                        {solutionList.map((s, index) => <MenuItem key={s.fileName} value={index}>{"[" + s.size + "] " + s.fileName}</MenuItem>)}
+                        {solutionList.map((s, index) => <MenuItem key={s.fileName}
+                                                                  value={index}>{"[" + s.size + "] " + s.fileName}</MenuItem>)}
                     </Select>
                 </Grid>
                 <Grid item xs={6}>
@@ -269,11 +330,14 @@ function App() {
                     <SvgContent
                         input={inputText}
                         solution={outputText}
-                        time={time}/>
+                        time={time}
+                        displayProblemLine={displayProblemLine}
+                        displayHistoryLine={displayHistoryLine}
+                    />
                 </Grid>
             </Grid>
         </>
-    )
+    );
 }
 
 export default App
