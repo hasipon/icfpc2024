@@ -78,11 +78,12 @@ def improve(prob_no: int):
     sources, _ = process_input(points)
     distance_matrix = max_xy_distance(sources)
     distance_matrix[:, 0] = 0
-    permutation, distance = solve_tsp_record_to_record(
+
+    permutation, distance = solve_tsp_local_search(
         distance_matrix,
         x0=[x for x in range(len(points))],
-        max_iterations=1,
-        #max_processing_time=60.0 * 5,
+        #max_iterations=1,
+        max_processing_time=60.0 * 5,
     )
 
     with open(tsp_path) as f:
