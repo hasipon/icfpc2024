@@ -1,5 +1,4 @@
 // github.com/Johniel/contests
-// converter.cpp
 
 #include <bits/stdc++.h>
 
