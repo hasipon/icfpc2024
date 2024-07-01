@@ -170,7 +170,7 @@ function App() {
 
     useEffect(() => {
         const update = async () => {
-            const resp = await axios.get<string>("http://34.146.140.6/repo/problems/spaceship/" + problemNo + ".txt");
+            const resp = await axios.get<string>("http://34.146.140.6/repo/problems/spaceship_tsp/" + problemNo + ".txt");
             if (resp.status !== 200) {
                 return;
             }
