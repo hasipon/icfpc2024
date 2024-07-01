@@ -96,7 +96,8 @@ def improve(prob_no: int):
 
 def main():
     if 1 < len(sys.argv):
-        improve(int(sys.argv[1]))
+        while True:
+            improve(int(sys.argv[1]))
     else:
         for i in range(11, 26):
             improve(i)
