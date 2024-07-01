@@ -197,7 +197,7 @@ pair<State, vector<int>> dijkstra(int _sx, int _sy, int _vx, int _vy, int nowBes
                 }
             }
         }
-        if(cur.step > 15){
+        if(cur.step > 20){
             continue;
         }
 
@@ -314,7 +314,7 @@ vector<Int> solveDijskstra(vector<pair<int, int> > &vg, int nowBest){
             target.push_back( vg[i+2]);
         }
         if(i < vg.size() - 3){
-            target.push_back( vg[i+3]);
+        //      target.push_back( vg[i+3]);
         }
         auto result = dijkstra(sx, sy, vx, vy, int(nowBest - ret.size()), target, vg[i]);
         vector<int> history = result.second;
@@ -349,6 +349,9 @@ vector<pair<int, int>> input(){
     int x, y;
     set<pair<int, int>> used;
     used.insert(make_pair(0, 0));
+    string hoge;
+    getline(cin, hoge);
+
     while(cin >> x >> y){
         if(used.count(make_pair(x, y))) continue;
         vg.push_back(make_pair(x, y));
@@ -563,6 +566,8 @@ int main() {
     vector<vector<Int>> anss;
     int nowBest = 1000001;
     auto vg = (input());
+    updateAnss(anss, solveDijskstra(vg, nowBest), nowBest);
+    return 0;
 
     // x_order
     {
@@ -572,7 +577,7 @@ int main() {
             vector<pair<int, int> > no = nearOrder(xo);
             if(!no.empty()){
                 //updateAnss(anss, solve(no, nowBest), nowBest);
-                updateAnss(anss, solveDijskstra(no, nowBest), nowBest);
+//                updateAnss(anss, solveDijskstra(no, nowBest), nowBest);
             }
         }
         //reverse(xo.begin(), xo.end());
