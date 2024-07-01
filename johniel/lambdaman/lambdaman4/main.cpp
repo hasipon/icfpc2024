@@ -1,6 +1,3 @@
-// github.com/Johniel/contests
-// johniel/lambdaman/lambdaman4/main.cpp
-
 #include <bits/stdc++.h>
 
 #define each(i, c) for (auto& i : c)
