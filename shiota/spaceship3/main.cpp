@@ -328,7 +328,7 @@ vector<int> solveDijskstra(const vector<pair<int, int> > &vg, const int nowBest,
             TwoDState toStop = nowState[si];
             forceStop(toStop);
             solveMoveAndStop(toStop, nextPos);
-            // nextState.push_back(toStop);
+            nextState.push_back(toStop);
         }
 
         nowState.clear();
