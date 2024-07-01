@@ -79,7 +79,8 @@ def improve(prob_no: int):
     distance_matrix = max_xy_distance(sources)
     distance_matrix[:, 0] = 0
 
-    permutation, distance = solve_tsp_local_search(
+    # permutation, distance = solve_tsp_local_search
+    permutation, distance = solve_tsp_simulated_annealing(
         distance_matrix,
         x0=[x for x in range(len(points))],
         #max_iterations=1,
