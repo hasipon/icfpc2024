@@ -47,9 +47,13 @@ struct State {
 StageData input(istream& is){
 	StageData vg;
     int x, y;
-    while(is >> x >> y){
+	string s;
+	while(getline(is, s)) {
+		if (s[0] == '#') continue;
+		stringstream ss(s);
+		ss >> x >> y;
         vg.push_back(make_pair(x, y));
-    }
+	}
     return vg;
 }
 
@@ -58,8 +62,9 @@ Int gcd(Int a, Int b){
     return gcd(b, a % b);
 }
 
-Int abs(pair<Int, Int> a) {
-	return abs(a.first) + abs(a.second);
+double abs(pair<Int, Int> a) {
+	return max(abs(a.first), abs(a.second));
+	// return sqrt(a.first * a.first + a.second * a.second);
 }
 
 template <typename T> class Ranking {
@@ -320,42 +325,6 @@ private:
 	[[nodiscard]] std::tuple<Int, Int, Int, Int, int> Step(Int px, Int py, Int vx, Int vy, int next_index, int dir) const {
 		vx += dx[dir];
 		vy += dy[dir];
-
-		/*
-		if (vx != 0 && vy != 0) {
-			const auto num_p = gcd(abs(vx), abs(vy));
-			for (int dt = 0; dt < num_p; dt++) {
-				const auto xx = px + vx * dt / num_p;
-				const auto yy = py + vy * dt / num_p;
-				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
-					next_index++;
-				}
-			}
-		}
-
-		if (vx != 0 && vy == 0) {
-			const auto num_p = abs(vx);
-			for (int dt = 0; dt < num_p; dt++) {
-				const auto xx = px + vx * dt / num_p;
-				const auto yy = py;
-				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
-					next_index++;
-				}
-			}
-		}
-
-		if (vx == 0 && vy != 0) {
-			const auto num_p = abs(vy);
-			for (int dt = 0; dt < num_p; dt++) {
-				const auto xx = px;
-				const auto yy = py + vy * dt / num_p;
-				while (stage_data_[next_index].first == xx && stage_data_[next_index].second == yy) {
-					next_index++;
-				}
-			}
-		}
-		*/
-
 		px += vx;
 		py += vy;
 		while (stage_data_[next_index].first == px && stage_data_[next_index].second == py) {
@@ -370,8 +339,6 @@ private:
 		const double w1 = abs(make_pair<Int, Int>(tp.first - px - vx, tp.second - py - vy));
 		const double w2 = abs(make_pair<Int, Int>(tp.first - sp.first, tp.second - sp.second));
 		return 1000.0 * (next_index + (1.0 - w1/w2));
-		// return 10000.0 * next_index - w1;
-		// return 1000.0 * next_index;
 	}
 
 	static uint64_t Hash(Int px, Int py, Int vx, Int vy, int next_index) {
