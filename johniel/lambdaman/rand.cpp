@@ -32,13 +32,18 @@ using ull = unsigned long long;
 using str = string;
 template<typename T> using vec = vector<T>;
 
-// constexpr lli mod = 1e9 + 7;
-constexpr lli mod = 998244353;
-// constexpr lli mod = 65087;
-// constexpr lli mod = 9808358;
+// constexpr lli mod = 998244353;
+constexpr lli mod = 1e9 + 7;
+// constexpr lli mod = 6700417;
+// constexpr lli mod = 524287;
+// constexpr lli mod = 131071;
+//  constexpr lli mod = 8191;
+
+// constexpr lli mod = 7235733;
+// constexpr lli mod = 131071;
+// 895932
 //                  10619620 (/ 998244353 94)
-//                  2098960
-//                  9152052
+//                  6700417
 
 vec<vec<char>> acc;
 
@@ -60,7 +65,7 @@ str encode(str text)
 {
   const str table = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&\'()*+,-./:;<=>?@[\\]^_`|~ \n";
   // str text = "solve lambdaman11 ";
-  str s;
+  str s = "S";
   each (c, text) s += (table.find(c) + 33);
   return s;
 }
@@ -76,10 +81,48 @@ str encode(lli x)
   return "I"+s;
 }
 
+//9
+// const int h = 50;
+// const int w = 50;
+
+// 17
+const int h = 141;
+const int w = 100;
+
+// 7
+// const int h = 31;
+// const int w = 28;
+
+
+// 5
+// const int h = 11;
+// const int w = 16;
+
+
+// 5
+// const int h = 50;
+// const int w = 50;
+
+
+// 19
+// const int h = 257;
+// const int w = 257;
+
+// 11
+// const int h = 101;
+// const int w = 101;
+
+// 18
+// const int h = 163;
+// const int w = 290;
+
+// 21
+// const int h = 200;
+// const int w = 200;
+
+
 vec<lli> l17(vec<vec<char>> g, const char srcC, const char dstC, const char landmarkC, const char deathC)
 {
-  const int w = 100;
-  const int h = 141;
   // const int h = g.size();
   // const int w = g.front().size();
   assert(g[0].size() == w);
@@ -95,10 +138,8 @@ vec<lli> l17(vec<vec<char>> g, const char srcC, const char dstC, const char land
     }
   }
   assert(0 <= src.first);
-  assert(0 <= dst.first);
+  // assert(0 <= dst.first);
   assert(landmarks.size());
-
-  constexpr lli mod = 998244353;
 
   int mx = 0;
   static lli vis[h][w];
@@ -128,46 +169,66 @@ vec<lli> l17(vec<vec<char>> g, const char srcC, const char dstC, const char land
       return ;
     };
 
-    lli x = xorshift() % mod;
+    lli x = xorshift() % 94;
+    // lli x = xorshift() % mod;
+    // lli x = 1;
+    // lli mult = xorshift() % (94*94);
     lli mult = xorshift() % mod;
-    if (94*94 <= mult) continue;
+    if (x == mult) continue;
+    // if (94 <= mult) continue;
     const pair<lli, lli> seed = make_pair(x, mult);
     pair<int, int> curr = src;
     assert(g[src.first][src.second] == srcC);
     vis[src.first][src.second] = loop;
     int visited = 0;
-    lli mn = 1LL << 60;
+    const lli inf = 1LL << 60;
+    lli mn = inf;
     str path;
 
     vec<lli> rvalues;
-    for (int _ = 0; _ < 800000; ++_) {
+    while (rvalues.size() < 70000) {
       rvalues.push_back(x);
       (x *= mult) %= mod;
     }
     reverse(rvalues.begin(), rvalues.end());
 
+    map<lli, int> freq;
+    each (i, rvalues) ++freq[i];
+    if (freq.size() != rvalues.size()) continue;
+
     each (x, rvalues) {
       auto [i, j] = curr;
       assert(visited <= landmarks.size());
       (x *= mult) %= mod;
-      if (visited == landmarks.size()) setmin(mn, x);
       if (g[i][j] == deathC) break;
       // if (visited == landmarks.size() && curr == dst) break;
       // if (visited == landmarks.size()) break;
       constexpr array<int, 8> di({0, 1, -1, 0, 1, -1, 1, -1});
       constexpr array<int, 8> dj({1, 0, 0, -1, 1, -1, -1, 1});
-      const int d = x % 4;
-      path += str("RDUL")[d];
-      const int ni = i + di[d];
-      const int nj = j + dj[d];
-      unless (0 <= ni && ni < h) continue;
-      unless (0 <= nj && nj < w) continue;
-      if (g[ni][nj] != '#') {
-        curr = make_pair(ni, nj);
-        if (vis[ni][nj] != loop) {
-          visited += (g[ni][nj] == landmarkC);
+      {
+        int d = x % 4;
+        path += str("RDUL")[d];
+        const int ni = i + di[d];
+        const int nj = j + dj[d];
+        unless (0 <= ni && ni < h) continue;
+        unless (0 <= nj && nj < w) continue;
+        if (g[ni][nj] != '#') {
+          curr = make_pair(ni, nj);
+          if (vis[ni][nj] != loop) {
+            visited += (g[ni][nj] == landmarkC);
+          }
+          vis[ni][nj] = loop;
         }
-        vis[ni][nj] = loop;
+      }
+    }
+
+    if (visited == landmarks.size()) {
+      lli y = rvalues.front();
+      for (int _ = 0; _ < 10; ++_) {
+        setmin(mn, x);
+        (x *= mult) %= mod;
+        if (freq.count(x)) break;
+        ++freq[x];
       }
     }
 
@@ -178,7 +239,8 @@ vec<lli> l17(vec<vec<char>> g, const char srcC, const char dstC, const char land
       vis[curr.first][curr.second] = -1;
       g[curr.first][curr.second] = ' ';
       show(cout);
-      vec<lli> u({seed.first, seed.second, mod, x});
+
+      vec<lli> u({seed.first, seed.second, mod, mn});
 
       clog << "restart?" << endl;
       clog << "DONE: " << make_pair(srcC, dstC) << landmarkC << endl;
@@ -211,14 +273,12 @@ vec<lli> l17(vec<vec<char>> g, const char srcC, const char dstC, const char land
 
 int main(int argc, char *argv[])
 {
-  const int w = 100;
-  const int h = 141;
-
   vec<vec<char>> g(h, vec<char>(w, '?'));
   assert(cin >> g);
 
-  str header = "solve lambdaman17 ";
+  str header = "solve lambdaman7 ";
   cout << encode(header) << endl;
+  clog << encode(header) << endl;
 
   while (true) {
     acc = g;

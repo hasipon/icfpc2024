@@ -84,3 +84,16 @@
 ;; 3/,6%},!-"$!-!.Y}
 
 ;; B$ B$ Ly B$ vy vy Lr Lx ? B= vx Id0 S3/,6%}},!-"$!-!.Y}} B. B$ B$ vr vr B% B* vx Iz I-jqaj BT I" BD B% vx I% SL>OF In
+
+
+;; S3/,6%},!-"$!-!.^}
+;; restart?
+;; DONE: (A,B)1
+;; ini, mult, mod, fin
+;; ((80,44),131071) 22
+;; 80 Iq
+;; 44 IM
+;; 131071 I/oD
+;; 22 I7
+
+B$ B$ Ly B$ vy vy Lr Lx ? B= vx I7_ S3/,6%}},!-"$!-!.^}} B. B$ B$ vr vr B% B* vx IM I/oD BT I" BD B% vx I% SL>OF Iq

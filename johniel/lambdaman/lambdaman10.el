@@ -92,3 +92,20 @@
 ;; 3/,6%},!-"$!-!.VU}
 
 ;; B$ B$ Ly B$ vy vy Lr Lx ? B= vx IrjO S3/,6%}},!-"$!-!.VU}} B. B$ B$ vr vr B% B* vx I,0 I-jqaj BT I" BD B% vx I% SL>OF I+NplX
+
+;; S3/,6%},!-"$!-!.VU}
+;; DONE: (A,B)1
+;; ini, mult, mod, fin
+;; ((74,23),131071) 6
+;; 74 Ik
+;; 23 I8
+;; 131071 I/oD
+;; 6 I'
+
+;; S3/,6%},!-"$!-!.VU}
+
+
+;; B$ B$ Ly B$ vy vy Lr Lx ? B= vx I7 S3/,6%}},!-"$!-!.\}} B. B$ B$ vr vr B% B* vx IM I/oD BT I" BD B% vx I% SL>OF Iq
+
+
+B$ B$ Ly B$ vy vy Lr Lx ? B= vx I' S3/,6%}},!-"$!-!.VU}} B. B$ B$ vr vr B% B* vx I8 I/oD BT I" BD B% vx I% SL>OF I;
