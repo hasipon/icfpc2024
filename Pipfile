@@ -14,5 +14,6 @@ cors = "*"
 flask-cors = "*"
 drawsvg = {version = "~=2.0", extras = ["all"]}
 cairosvg = "*"
+python-tsp = "*"
 
 [dev-packages]

@@ -60,7 +60,7 @@ class Main:
     def reduction(self):
         f = self.history[-1]
         update = defaultdict(list)
-        warp = []
+        warp = {}
         for pos, cmd in f.items():
             i, j = pos
             if cmd == '<':
@@ -125,7 +125,9 @@ class Main:
                     dt = f.get((i + 1, j))
                     assert isinstance(dx, int) and isinstance(dy, int) and isinstance(dt, int)
                     assert dt > 0
-                    warp.append((i - dy, j - dx, dt, f[i - 1, j]))
+                    if (i - dy, j - dx) in warp:
+                        raise Exception(f'conflict {i - dy} {j - dx} : {i} {j}')
+                    warp[(i - dy, j - dx)] = (dt, f[i - 1, j])
             elif cmd == '=':
                 if (i, j - 1) in f and (i - 1, j) in f and f[i - 1, j] == f[i, j - 1]:
                     update[i, j - 1].append(None)
@@ -166,15 +168,15 @@ class Main:
             return True
 
         if warp:
-            dts = {x[2] for x in warp}
+            dts = {x[0] for x in warp.values()}
             if len(dts) != 1:
                 raise Exception(f'multiple dts {dts}')
             dt = dts.pop()
             if dt >= len(self.history):
                 raise Exception(f'invalid dt {dt} {len(self.history)}')
             self.history = self.history[:-dt]
-            for i, j, _, v in warp:
-                self.history[-1][i, j] = v
+            for pos, val in warp.items():
+                self.history[-1][pos] = val[1]
         else:
             self.history.append(new_f)
 
