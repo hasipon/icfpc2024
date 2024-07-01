@@ -50,7 +50,7 @@ map<int, vector<OneDState>> solve1D(const int _v, const int _dist,  map<int, int
                                        0, _v, vector<int>()
                                });
         Q.push(make_pair(0, start));
-        if(_v == 0){
+        if(_v == 0 && _dist == 0){
             for(int i = 0; i < pLimit; i++){
                 start.history.push_back(5);
                 Q.push(make_pair(-start.history.size(), start));
