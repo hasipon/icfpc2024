@@ -5,14 +5,14 @@
 (defalias 'drop 's-chop-left)
 
 
-
+(setq lexical-binding t)
 (funcall (funcall (lambda (y) (funcall y y))
                   (lambda (rec)
                     (lambda (x)
-                      (if (= x 383897362)
+                      (if (= x 1024)
                           ""
                         (s-concat (take 1 (drop (% x 4) "RDUL"))
-                                  (funcall (funcall rec rec) (% (* x 709725402) 998244353)))))))
+                                  (funcall (funcall rec rec) (% (* x 2) 998244353)))))))
          1)
 
 
