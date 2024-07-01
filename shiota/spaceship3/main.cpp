@@ -252,6 +252,110 @@ void forceStop(TwoDState &st){
     }
     assert(st.v.first == 0 && st.v.second == 0);
 }
+class State{
+public:
+    Int vx, vy, px, py;
+    vector<pair<int, int> > target;
+    bool found;
+    vector<int> history;
+    pair<int, int> gv, gp;
+    bool operator < (const State &rhs) const {
+        if(vx != rhs.vx) return vx < rhs.vx;
+        if(vy != rhs.vy) return vy < rhs.vy;
+        if(px != rhs.px) return px < rhs.px;
+        if(py < rhs.py)return py < rhs.py;
+        return target < rhs.target;
+    }
+};
+
+pair<TwoDState, bool> dijkstra(const TwoDState &s, const vector<pair<int, int>> &tg, pair<int, int> g){
+    map<State, Int> minCost;
+    map<State, Int>  ope;
+    priority_queue<pair<Int, State>> Q;
+
+    {
+        State start{s.v.first, s.v.second, s.p.first, s.p.second, tg, false};
+        Q.push(make_pair(0, start));
+    }
+
+    State best;
+    best.found = false;
+    while(!Q.empty()){
+        int cost = -Q.top().first;
+        const State cur = Q.top().second;
+        Q.pop();
+        if(best.found){
+            if(best.target.size() < cur.target.size()){
+                continue;
+            }
+            if(cur.found){
+                if(best.target.size() > cur.target.size()){
+                    best = cur;
+                }
+            }
+        }
+        if(cost >= 10){
+            if(best.found){
+                TwoDState ans = {
+                        g,
+                        best.gv,
+                        best.history,
+                        int(1e9),
+                };
+                return make_pair(ans, true);
+            }
+            return make_pair(TwoDState{}, false);
+        }
+
+        for(Int i = 0; i < 9; i++){
+            State next = cur;
+            const int vx = next.vx = cur.vx + dx[i];
+            const int vy = next.vy = cur.vy + dy[i];
+
+            const int px = next.px = cur.px + vx;
+            const int py = next.py = cur.py + vy;
+            int nextCost = cost + 1;
+            if(!next.found){
+                next.history.push_back(i+1);
+            }
+
+            if(!next.target.empty() && next.target[0] == make_pair(next.px, next.py)){
+                next.target.erase(next.target.begin());
+            }
+            if(next.py == g.second && next.px == g.first){
+                next.found = true;
+                next.gv = make_pair(vx, vy);
+                next.gp = make_pair(px, py);
+            }
+
+            if(minCost.find(next) == minCost.end() || minCost[next] > nextCost){
+                minCost[next] = nextCost;
+                ope[next] = i+1;
+
+                if(next.target.empty()){
+                    TwoDState ans = {
+                            g,
+                            next.gv,
+                            next.history,
+                            cost,
+                    };
+                    return make_pair(ans, true);
+                }
+                Q.push(make_pair(-nextCost, next));
+            }
+        }
+    }
+    if(best.found){
+        TwoDState ans = {
+                g,
+                make_pair(best.px, best.py),
+                best.history,
+                int(1e9),
+        };
+        return make_pair(ans, true);
+    }
+    return make_pair(TwoDState{}, false);
+}
 
 
 vector<int> solveDijskstra(const vector<pair<int, int> > &vg, const int nowBest, const int beam, const int pid){
@@ -325,20 +429,53 @@ vector<int> solveDijskstra(const vector<pair<int, int> > &vg, const int nowBest,
                 }
             }
 
-            TwoDState toStop = nowState[si];
-            forceStop(toStop);
-            solveMoveAndStop(toStop, nextPos);
-            nextState.push_back(toStop);
+            // greedy
+            {
+                TwoDState toStop = nowState[si];
+                forceStop(toStop);
+                solveMoveAndStop(toStop, nextPos);
+                nextState.push_back(toStop);
+            }
         }
+            TwoDState miniDijskstra;
+            bool first =true;
+            for (int si = 0; si < min(int(nowState.size()), beam/10 + 1); si++) {
+                vector<pair<int, int>> tg;
+                tg.push_back(nextPos);
+                if(posi +1 < vg.size()){
+                    tg.push_back(vg[posi+1]);
+                }
+
+                auto res = dijkstra(nowState[si], tg, nextPos);
+                if(res.second){
+                    auto newHis = nowState[si].history;
+                    for(int i = 0; i<res.first.history.size(); i++){
+                        newHis.push_back(res.first.history[i]);
+                    }
+                    res.first.history = newHis;
+                    if(first){
+                        miniDijskstra = res.first;
+                        first = false;
+                    }else{
+                        miniDijskstra = min(miniDijskstra, res.first, [&](const TwoDState &lhs, const TwoDState &rhs){
+                          return lhs.history.size() + lhs.nextCost < rhs.history.size() + rhs.nextCost;
+                        });
+                    }
+                }
+            }
 
         nowState.clear();
         sort(nextState.begin(), nextState.end(), [&](const TwoDState &lhs, const TwoDState &rhs){
             return lhs.history.size() + lhs.nextCost < rhs.history.size() + rhs.nextCost;
         });
+
         for(int i = 0; i<min(beam, int(nextState.size())); i++){
             if(nextState[i].history.size() < nowBest){
                 nowState.push_back(nextState[i]);
             }
+        }
+        if(!first){
+            nowState.push_back(miniDijskstra);
         }
         if(!nowState.empty()){
             last = nowState[0];
@@ -470,10 +607,7 @@ void updateAnss(vector<vector<int>> &anss, const vector<int> &ans, int &nowBest)
 
 map<int, int> beamMap;
 void buildBeamMap(){
-    for(int i = 0; i<30;i++)beamMap[i] = 100;
-    beamMap[11] = 1;
-    beamMap[13] = 100;
-    beamMap[14] = 100;
+    for(int i = 0; i<30;i++)beamMap[i] = 10;
 }
 
 
