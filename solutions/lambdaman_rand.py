@@ -4,6 +4,7 @@ import requests
 import time
 import glob
 import re
+import math
 
 print("start")
 tbl = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&\'()*+,-./:;<=>?@[\\]^_`|~ \n"
@@ -15,7 +16,7 @@ def convint(n):
 		n //= 94
 	return r
 
-for i in range(1, 22):
+for i in range(19, 22):
     header = "solve lambdaman" + str(i) + " "
     min = ""
     min_file = ""
@@ -63,6 +64,7 @@ for i in range(1, 22):
             multiply = "B* I" + convint(dir_interval)
 
         msg = '''
+
 B. S{header}
 B~ B~ B~ 
     B~ 
@@ -70,17 +72,19 @@ B~ B~ B~
         Lr Ld Li Lc
             ? B= vd I!
                 S
-                ? B< vi I{rand_segment}
                     B.
                         BT I{dir_len} BD {multiply} B% vc I{dir_seq_len} S{dir_seq}
-                        B~ B~ B~ B~ vr vr vd B- vi I" 
+                        B~ B~ B~ B~ vr vr 
+                            ? B= B% vi I{rand_segment} I!
+                                B/ vd I{max}
+                                vd
+                            B+ vi I" 
                             B%
                                 B+
-                                    B* I{rand_base_a} B* B% vd I{max} vc
+                                    B* I{rand_base_a} B* B+ I" B% vd I{max} vc
                                     I{rand_b}
                                 I{rand_base_m}
-                    B~ B~ B~ B~ vr vr B/ vd I{max} I! vc
-    I{data} I! I{rand_start}
+    I{data} I" I{rand_start}
 '''
         msg = msg.format(
             data = convint(enc),
@@ -89,8 +93,8 @@ B~ B~ B~
             dir_seq = ''.join(chr(tbl.index(x)+33) for x in dir_seq),
             dir_len = convint(dir_len),
             dir_interval = convint(dir_interval),
-            dir_seq_len = convint(len(dir_seq)),
-            rand_start = convint(rand_start),
+            dir_seq_len = convint(math.floor((len(dir_seq) - dir_len) / dir_interval) + 1),
+            rand_start = convint(rand_start ),
             rand_segment = convint(rand_segment),
             rand_base_a = convint(rand_base_a),
             rand_base_m = convint(rand_base_m),
