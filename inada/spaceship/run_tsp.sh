@@ -1,0 +1,10 @@
+concorde 1.tsp
+concorde 2.tsp
+concorde 3.tsp
+concorde 4.tsp
+concorde 5.tsp
+concorde 6.tsp
+concorde 7.tsp
+concorde 8.tsp
+concorde 9.tsp
+concorde 10.tsp

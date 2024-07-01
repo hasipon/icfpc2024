@@ -13,6 +13,8 @@ typedef Problem =
 
 typedef State = 
 {
+	x:Int,
+	y:Int,
 	moves   : Array<Move>,
 }
 

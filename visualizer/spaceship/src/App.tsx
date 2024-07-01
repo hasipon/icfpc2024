@@ -196,7 +196,7 @@ function App() {
                         value={problemNo}
                         onChange={(e) => {
                             const v = Number(e.target.value);
-                            if (1 <= v && v <= 21) {
+                            if (1 <= v && v <= 25) {
                                 setProblemNo(v);
                             }
                         }}

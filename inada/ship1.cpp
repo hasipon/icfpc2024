@@ -4,6 +4,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <map>
 #include <queue>
 #include <set>
@@ -11,16 +12,21 @@
 #include <vector>
 #include <cstdlib>
 
+#define USE_MUTEX 0
+
 using namespace std;
 using namespace std::chrono;
 
 int envInt(const char* name, int defaultValue) {
 	auto s = getenv(name);
-	if (s != nullptr) {
-		return atoi(s);
-	}
-
+	if (s != nullptr) return atoi(s);
 	return defaultValue;
+}
+
+std::string envStr(const char* name, const char* defaultValue) {
+	auto s = getenv(name);
+	if (s != nullptr) return s;
+	return "";
 }
 
 using Int = long long;
@@ -52,8 +58,8 @@ Int gcd(Int a, Int b){
     return gcd(b, a % b);
 }
 
-double abs(pair<Int, Int> a) {
-	return sqrt(a.first * a.first + a.second * a.second);
+Int abs(pair<Int, Int> a) {
+	return abs(a.first) + abs(a.second);
 }
 
 template <typename T> class Ranking {
@@ -124,10 +130,10 @@ public:
 	};
 
 	struct SearchNode {
-		int next_index;
-		double score;
-		Int px, py;
-		Int vx, vy;
+		int next_index{};
+		double score{};
+		Int px{}, py{};
+		Int vx{}, vy{};
 		std::shared_ptr<DirListNode> dir_list;
 		bool operator<(const SearchNode& o) const { return score < o.score; }
 	};
@@ -142,15 +148,19 @@ public:
 		int maxTurn = envInt("MAXTURN", 1000);
 		ranking_.resize(maxTurn+ 1);
 		bests_.resize(maxTurn);
-		weak_hash_.resize(maxTurn);
+
+#if USE_MUTEX
 		mutex_.resize(maxTurn + 1);
 		for (auto& m : mutex_) {
 			m = std::make_unique<std::mutex>();
 		}
+#endif
 
 		auto_target_sort_= auto_target;
 		if (auto_target_sort_) {
+#if USE_MUTEX
 			std::lock_guard lock(g_mutex_);
+#endif
 			fixed_target_index_ = 0;
 			sort(stage_data_.begin(), stage_data_.end(), [](auto& a, auto& b) {
 				return abs(a) < abs(b);
@@ -194,8 +204,8 @@ public:
 			}
 		};
 
-		const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
-		// const auto n_thread = 1;
+		// const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
+		const auto n_thread = 1;
 		std::vector<std::thread> threads;
 		threads.reserve(n_thread);
 		for (int i = 0; i < n_thread; i++) {
@@ -220,7 +230,9 @@ private:
 				}
 
 				{
+#if USE_MUTEX
 					std::lock_guard lock(*mutex_[depth]);
+#endif
 					auto& prev = ranking_[depth];
 					if (prev.empty()) {
 						continue;
@@ -234,21 +246,34 @@ private:
 
 					const auto h = Hash(node.px, node.px, node.vx, node.vy, node.next_index);
 					const auto h2 = static_cast<uint16_t>(h ^ h >> 16 ^ h >> 32 ^ h >> 48);
-					auto& hash_pool = weak_hash_[depth];
-					if (hash_pool[h2] == h) {
-						continue;
+					{
+						std::lock_guard g_lock(g_mutex_);
+						auto &hash_pool = weak_hash_;
+						if (hash_pool[h2] == h) {
+							continue;
+						}
+						hash_pool[h2] = h;
 					}
-					hash_pool[h2] = h;
 					updated = true;
+				}
+
+				if (depth % 1000 == 0) {
+					cerr << "depth:" << depth << endl;
+					cerr << "ranking_size:" << ranking_[depth].size() << endl;
 				}
 
 				for (int dir = 0; dir < 9; dir++) {
 					const auto [npx, npy, nvx, nvy, nni] = Step(node.px, node.py, node.vx, node.vy, node.next_index, dir);
 
 					{
+#if USE_MUTEX
 						std::lock_guard lock(*mutex_[depth]);
+#endif
 						auto& best = bests_[depth];
 						if (best.next_index < nni) {
+							if (depth + 1 == bests_.size()) {
+								cerr << "nni:" << nni << endl;
+							}
 							best.next_index = nni;
 							best.px = npx;
 							best.py = npy;
@@ -272,7 +297,9 @@ private:
 
 					tmp_node.score = EvalFunc(npx, npy, nvx, nvy, nni);
 					{
+#if USE_MUTEX
 						std::lock_guard lock(*mutex_[depth + 1]);
+#endif
 						if (ranking_[depth + 1].is_rankin(tmp_node)) {
 							tmp_node.next_index = nni;
 							tmp_node.px = npx;
@@ -340,8 +367,8 @@ private:
 	[[nodiscard]] double EvalFunc(Int px, Int py, Int vx, Int vy, int next_index) const {
 		const auto tp = stage_data_[next_index];
 		const auto sp = next_index == 0 ? make_pair<Int, Int>(0, 0) : stage_data_[next_index - 1];
-		const auto w1 = abs(make_pair<Int, Int>(tp.first - px - vx, tp.second - py - vy));
-		const auto w2 = abs(make_pair<Int, Int>(tp.first - sp.first, tp.second - sp.second));
+		const double w1 = abs(make_pair<Int, Int>(tp.first - px - vx, tp.second - py - vy));
+		const double w2 = abs(make_pair<Int, Int>(tp.first - sp.first, tp.second - sp.second));
 		return 1000.0 * (next_index + (1.0 - w1/w2));
 		// return 10000.0 * next_index - w1;
 		// return 1000.0 * next_index;
@@ -358,14 +385,15 @@ private:
 	}
 
 	int base_turn_ = 0;
-public:
 	bool auto_target_sort_ = false;
 	int fixed_target_index_  = 0;
 	StageData stage_data_;
-	std::vector<std::array<uint64_t, 1 << 16>> weak_hash_;
+	std::array<uint64_t, 1 << 16> weak_hash_;
 	std::vector<SearchNode> bests_;
 	std::vector<Ranking<SearchNode>> ranking_;
+#if USE_MUTEX
 	std::vector<std::unique_ptr<std::mutex>> mutex_;
+#endif
 	std::mutex g_mutex_;
 };
 
@@ -379,6 +407,32 @@ int main(int argc, char *argv[]) {
     auto vg = input(ifs);
     ifs.close();
 
+	auto sol_file = envStr("TSP_SOL", "");
+    if (!sol_file.empty()) {
+	    ifstream fs(sol_file);
+    	if (fs.is_open()) {
+		    int n, k;
+		    fs >> n;
+		    fs >> k;
+		    if (k != 0) {
+			    cerr << "tsp sol: invalid origin" << endl;
+			    exit(1);
+		    }
+
+		    auto org = vg;
+    		vg.resize(n);
+		    for (int i = 0; i < n; i++) {
+			    fs >> k;
+			    vg[i] = org[k - 1];
+		    }
+
+		    cerr << "loaded:" << sol_file << endl;
+    	} else {
+		    cerr << "sol file not found:" << sol_file << endl;
+    	}
+    }
+
+    cerr << "vg.size()=" << vg.size() << endl;
 	ChokudaiSearch cs(vg, false);
 	cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 60 * 1000));
 	auto bests = cs.GetBests();
@@ -400,18 +454,18 @@ int main(int argc, char *argv[]) {
 		}
 		cout << endl;
 	} else {
-		// auto& best = *max_element(bests.begin(), bests.end(), [](const auto& a, const auto& b) { return a.next_index < b.next_index; });
-		auto& best = bests.back();
-		cerr << "Not found ... next_index=" << best.next_index << " score=" << best.score << endl;
-		cerr << cs.stage_data_[best.next_index].first << " " << cs.stage_data_[best.next_index].second << endl;
-		for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
-			moves.push_back(ptr->dir + 1);
+		cerr << "Not found" << endl;
+		if (!bests.empty()) {
+			auto &best = bests.back();
+			cerr << "next_index=" << best.next_index << " score=" << best.score << endl;
+			for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
+				moves.push_back(ptr->dir + 1);
+			}
+			reverse(moves.begin(), moves.end());
+			for (auto dir: moves) {
+				cerr << dir;
+			}
+			cerr << endl;
 		}
-
-		reverse(moves.begin(), moves.end());
-		for (auto dir: moves) {
-			cerr << dir;
-		}
-		cerr << endl;
 	}
 }
