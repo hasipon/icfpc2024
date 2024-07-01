@@ -22,7 +22,7 @@ def submit(plain_text):
     encrypted_text = encode(plain_text)
     print(encrypted_text)
     res = requests.post("https://boundvariable.space/communicate",
-                        headers={"Authorization": "Bearer 92af6ee1-e632-462c-8baa-0d26799620d6"}, data=encrypted_text)
+                        headers={"Authorization": "$TOKEN"}, data=encrypted_text)
     return decode(res.text)
 
 
