@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
   };
   // fn(ev);
 
-  str test = "B$ L# B$ B$ B$ B$ L? B$ v? v? L# L* L< L> ? B= v* I! S B. B. B. B$ B$ B$ B$ v# v# B- v* I\" v< B! v> B$ B$ v# v< v> B. B$ B$ B$ B$ v# v# B- v* I\" v< v> B$ B$ v# B% B+ v< I\" I% v> B. B. B$ B$ B$ B$ v# v# B- v* I\" v< v> B$ B$ v# B% B+ v< I# I% v> B$ B$ B$ B$ v# v# B- v* I\" B% B+ I# v< I% B! v> I) I! F L< L> BT I\" BD v< ? v> S>LOF SL>FO";
+  str test = "B$ Lz B. B. B. B$ B$ B$ vz I#P$O9 IL( I\"nT B$ B$ B$ vz I\"Ch_n Ih% I0l& B. B$ B$ B$ vz I+kBh= Ii` I\",# B$ B$ B$ vz I${Q^L I=W I/^ B$ B$ vz IvN/$ Ii* I57G Ls Lm Lf B$ B$ Ly B$ vy vy Lr Lx ? B= vx vf S B. BT I\" BD B% x I% SL>OF B$ B$ vr vr B% B* vx vm I-jqaj vs";
   fn(test);
   // fn("B$ L# B$ v# B$ v# B$ v# B$ v# B$ v# B$ v# B$ v# S>FOL L$ B. v$ v$");
 

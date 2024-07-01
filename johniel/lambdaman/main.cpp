@@ -32,204 +32,57 @@ using ull = unsigned long long;
 using str = string;
 template<typename T> using vec = vector<T>;
 
-uint32_t xorshift(void)
+// constexpr lli mod = 1e9 + 7;
+constexpr lli mod = 998244353;
+
+const int h = 141;
+const int w = 100;
+
+char g[h][w];
+
+void floodfill(int i, int j, char color)
 {
-  // https://shindannin.hatenadiary.com/entry/2021/03/06/115415
-  static uint32_t x = 123456789;
-  static uint32_t y = 362436069;
-  static uint32_t z = 521288629;
-  static uint32_t w = 88675123;
-  uint32_t t;
-
-  t = x ^ (x << 11);
-  x = y; y = z; z = w;
-  return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-}
-
-const str g[] = {
-  "############################",
-  "#............##............#",
-  "#.####.#####.##.#####.####.#",
-  "#.####.#####.##.#####.####.#",
-  "#.####.#####.##.#####.####.#",
-  "#..........................#",
-  "#.####.##.########.##.####.#",
-  "#.####.##.########.##.####.#",
-  "#......##....##....##......#",
-  "######.##############.######",
-  "######.##############.######",
-  "######.##..........##.######",
-  "######.##.###..###.##.######",
-  "######.##.#......#.##.######",
-  "#.........#......#.........#",
-  "######.##.#......#.##.######",
-  "######.##.########.##.######",
-  "######.##..........##.######",
-  "######.##.########.##.######",
-  "######.##.########.##.######",
-  "#............##............#",
-  "#.####.#####.##.#####.####.#",
-  "#.####.#####.##.#####.####.#",
-  "#...##................##...#",
-  "###.##.##.########.##.##.###",
-  "###.##.##.########.##.##.###",
-  "#......##....##....##......#",
-  "#.##########.##.##########.#",
-  "#.##########.##.##########.#",
-  "#..........................#",
-  "############################"};
-
-const int h = 31;
-const int w = 28;
-const pair<int, int> src = make_pair(23, 12);
-constexpr int DIR = 4;
-constexpr array<int, DIR> di({0, 1, -1, 0});
-constexpr array<int, DIR> dj({1, 0, 0, -1});
-const str dirstr = "RDUL";
-
-int name[h][w];
-bool taboo[h][w][h][w];
-
-bool is_inside(int i, int j) {
-  return (0 <= i && i < h) && (0 <= j && j < w);
-}
-
-bool is_connected(void) {
-  static bool vis[h][w];
-  fill(&vis[0][0], &vis[h - 1][w - 1] + 1, false);
-  function<int(int, int)> rec = [&] (int i, int j) {
-    vis[i][j] = true;
-    for (int d = 0; d < DIR; ++d) {
-      int ni = i + di[d];
-      int nj = j + dj[d];
-      if (is_inside(ni, nj) && !vis[ni][nj] && !taboo[i][j][ni][nj]) rec(ni, nj);
-    }
-  }(src.first, src.second);
-  int dot = 0;
-  int visited = 0;
-  for (int i = 0; i < h; ++i) {
-    for (int j = 0; j < w; ++j) {
-      dot += (g[i][j] == '.');
-      visited += vis[i][j];
-    }
+  clog << make_pair(i, j) << color << endl;
+  g[i][j] = color;
+  constexpr array<int, 8> di({0, 1, -1, 0, 1, -1, 1, -1});
+  constexpr array<int, 8> dj({1, 0, 0, -1, 1, -1, -1, 1});
+  for (int d = 0; d < 4; ++d) {
+    int ni = i + di[d];
+    int nj = j + dj[d];
+    clog << make_pair(ni, nj) << endl;
+    unless (0 <= ni && ni < h) continue;
+    unless (0 <= nj && nj < w) continue;
+    if (g[ni][nj] != '.') continue;
+    floodfill(ni, nj, color);
   }
-  return dot == visited;
-}
-
-str solve(const vec<pair<pair<int, int>, pair<int, int>>>& blocked)
-{
-  {
-    const int connected = xorshift() % blocked.size();
-    auto [a, b] = blocked[connected];
-    auto [ai, aj] = a;
-    auto [bi, bj] = b;
-    taboo[ai][aj][bi][bj] = true;
-    taboo[bi][bj][ai][aj] = true;
-  }
-  static bool scc[h][w];
-  {
-    fill(&scc[0][0], &scc[h - 1][w - 1] + 1, false);
-    static bool vis[h][w];
-    fill(&vis[0][0], &vis[h - 1][w - 1] + 1, false);
-    try {
-      function<bool(int, int, int, int)> rec = [&] (int i, int j, int pi, int pj) {
-        vis[i][j] = true;
-        for (int d = 0; d < DIR; ++d) {
-          int ni = i + di[d];
-          int nj = j + dj[d];
-          if (pi == ni && pj == nj) continue;
-          if (is_inside(ni, nj)) {
-            if (vis[ni][nj]) return scc[i][j] = scc[ni][nj] = true;
-            if (rec(ni, nj)) {
-              // if (scc[i][j]) throw "";
-              return scc[i][j] = scc[ni][nj] = true;
-            }
-          }
-        }
-        return false;
-      }(src.first, src.second, src.first, src.second);
-    } catch (const char* e) {
-    }
-  }
-
-  pair<int, int> curr = src;
-  while (true) {
-    auto [i, j] = curr;
-    pair<int, int> next = make_pair(-1, -1);
-    char d = 0;
-    for (int d = 0; d < DIR; ++d) {
-      int ni = i + di[d];
-      int nj = j + dj[d];
-      if (is_inside(ni, nj) && !vis[ni][nj]){
-        if (scc[ni][nj]) {
-          next = make_pair(ni, nj);
-          d = dirstr[d];
-        } else {
-        }
-      }
-    }
-  }
-
   return ;
 }
-
-#include <random>
-template<typename T>
-void vshuffle(vec<T>& v)
-{
-  std::random_device seed_gen;
-  std::mt19937 engine(seed_gen());
-  std::shuffle(v.begin(), v.end(), engine);
-  return ;
-};
 
 int main(int argc, char *argv[])
 {
-  {
-    int cnt = 0;
-    for (int i = 0; i < h; ++i) {
-      for (int j = 0; j < w; ++j) {
-        name[i][j] = cnt++;
+  for (int i = 0; i < h; ++i) {
+    for (int j = 0; j < w; ++j) {
+      cin >> g[i][j];
+      clog << g[i][j];
+    }
+    clog << endl;
+  }
+
+  str colors = "[]$%^&*!@^#-+=";
+  for (int i = 0; i < h; ++i) {
+    for (int j = 0; j < w; ++j) {
+      if (g[i][j] == '.') {
+        floodfill(i, j, colors.back());
+        colors.pop_back();
       }
     }
   }
-  fill(&taboo[0][0][0][0], &taboo[h - 1][w - 1][h - 1][w - 1] + 1, false);
 
-  vec<pair<pair<int, int>, pair<int, int>>> candidates;
   for (int i = 0; i < h; ++i) {
     for (int j = 0; j < w; ++j) {
-      unless (g[i][j] == '.') continue;
-      for (int d = 0; d < DIR; ++d) {
-        int ni = i + di[d];
-        int nj = j + dj[d];
-        if (is_inside(ni, nj) && g[ni][nj] == '.') {
-          pair<int, int> a = make_pair(i, j);
-          pair<int, int> b = make_pair(ni, nj);
-          unless (a < b) swap(a, b);
-          candidates.push_back(make_pair(a, b));
-        }
-      }
+      cout << g[i][j];
     }
-    sort(candidates.begin(), candidates.end());
-    candidates.erase(unique(candidates.begin(), candidates.end()), candidates.end());
-
-    vshuffle(candidates);
-
-    vec<pair<pair<int, int>, pair<int, int>>> blocked;
-    for (int i = 0; i < candidates.size(); ++i) {
-      auto [a, b] = candidates[i];
-      auto [ai, aj] = a;
-      auto [bi, bj] = b;
-      taboo[ai][aj][bi][bj] = true;
-      taboo[bi][bj][ai][aj] = true;
-      unless (is_connected()) {
-        blocked.push_back(candidates[i]);
-        taboo[ai][aj][bi][bj] = false;
-        taboo[bi][bj][ai][aj] = false;
-      }
-    }
-
-    solve(blocked);
+    cout << endl;
   }
 
   return 0;
