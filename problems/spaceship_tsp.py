@@ -78,9 +78,10 @@ def improve(prob_no: int):
     sources, _ = process_input(points)
     distance_matrix = max_xy_distance(sources)
     distance_matrix[:, 0] = 0
-    permutation, distance = solve_tsp_lin_kernighan(
+    permutation, distance = solve_tsp_record_to_record(
         distance_matrix,
         x0=[x for x in range(len(points))],
+        max_iterations=1,
         #max_processing_time=60.0 * 5,
     )
 
