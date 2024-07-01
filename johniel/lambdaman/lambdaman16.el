@@ -106,4 +106,22 @@ B. B$ L- B$ v- B. SOOOO B$ v- B. B. B$ v- B. B$ v- SRR S>LLO SF>L B. B$ v- B. B$
 ;; B$ L# B$ B$ B$ B$ L? B$ v? v? L# L* L< L> ? B= v* I! S B. B. B. B$ B$ B$ B$ v# v# B- v* I\" v< B! v> B$ B$ v# v< v> B. B$ B$ B$ B$ v# v# B- v* I\" v< v> B$ B$ v# B% B+ v< I\" I% v> B. B. B$ B$ B$ B$ v# v# B- v* I\" v< v> B$ B$ v# B% B+ v< I# I% v> B$ B$ B$ B$ v# v# B- v* I\" B% B+ I# v< I% B! v> I) I! F L< L> BT I\" BD v< ? v> S>LOF SL>FO
 
 
-B$ Lc B$ B$ B$ B$ Lx B$ vx vx Lh Ln Ld Lr ? B= vn I! S B. B. B. B$ B$ B$ B$ vh vh B- vn I" vd U! vr B$ B$ vc vd vr B. B$ B$ B$ B$ vh vh B- vn I" vd vr B$ B$ vc B% B+ vd I" I% vr B. B. B$ B$ B$ B$ vh vh B- vn I" vd vr B$ B$ vc B% B+ vd I# I% vr B$ B$ B$ B$ vh vh B- vn I" B% B+ I# vd I% U! vr I) I! F Ld Lr BT I" BD vd ? vr S>LOF SL>FO
+;; B$ Lc B$ B$ B$ B$ Lx B$ vx vx Lh Ln Ld Lr ? B= vn I! S B. B. B. B$ B$ B$ B$ vh vh B- vn I" vd U! vr B$ B$ vc vd vr B. B$ B$ B$ B$ vh vh B- vn I" vd vr B$ B$ vc B% B+ vd I" I% vr B. B. B$ B$ B$ B$ vh vh B- vn I" vd vr B$ B$ vc B% B+ vd I# I% vr B$ B$ B$ B$ vh vh B- vn I" B% B+ I# vd I% U! vr I) I! F Ld Lr BT I" BD vd ? vr S>LOF SL>FO
+
+
+(defun hilbert (level)
+  (labels ((h (n x y dx dy)
+              (when (> n 0)
+                (h (- n 1) x y dy dx)
+                (setq x (+ x dx) y (+ y dy))
+                (format t "~A ~A~%" x y)
+                (h (- n 1) x y dx dy)
+                (setq x (+ x dy) y (+ y dx))
+                (format t "~A ~A~%" x y)
+                (h (- n 1) x y dx dy)
+                (setq x (- x dx) y (- y dy))
+                (format t "~A ~A~%" x y)
+                (h (- n 1) x y (- dy) (- dx)))))
+    (h level 0 0 1 0)))
+
+(hilbert 3)

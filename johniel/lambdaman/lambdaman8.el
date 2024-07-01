@@ -140,3 +140,88 @@ B$ L# B$ v# B. B. B$ v# S> B$ v# SF B. B$ v# SO B$ v# SL L% B$ L$ B$ v$ B$ v$ B$
 B$ L# B$ v# B. B. B$ v# S> B$ v# SF B. B$ v# SO B$ v# SL L% B$ L$ B$ v$ B$ v$ B$ v$ B$ v$ v% L? B. B. v? v? B. v? v?
 
 ;; 138point
+
+;;
+(funcall (lambda (rep81)
+           (funcall rep81
+                    (s-concat (s-concat (funcall rep81 "DD")
+                                        (funcall rep81 "LL"))
+                              (s-concat (funcall rep81 "UU")
+                                        (funcall rep81 "RR")))))
+         (lambda (word)
+           (funcall
+            (lambda (triple)
+              (funcall triple (funcall triple (funcall triple (funcall triple word)))))
+            (lambda (pattern)
+              (s-concat (s-concat pattern pattern)
+                        pattern)))))
+
+;;
+B$ L# B$ v# B. B. B$ v# S>> B$ v# SFF B. B$ v# SOO B$ v# SLL L$ B$ L% B$ v% B$ v% B$ v% B$ v% v$ L? B. B. v? v? v?
+
+;; 136point
+
+;;
+
+;; Yコンビネータの定義
+(setq Y
+      (lambda (f)
+        ((lambda (x) (x x))
+         (lambda (x)
+           (f (lambda (arg) ((x x) arg)))))))
+
+;; 再帰関数の定義（例: 階乗関数）
+(setq factorial
+      (Y (lambda (recur)
+           (lambda (n)
+             (if (= n 0)
+                 1
+               (* n (funcall recur (- n 1))))))))
+
+;; 使用例
+(print (funcall factorial 5)) ;; 出力: 120
+
+
+;;
+
+;; B$ B$ 
+;;         La B$ va va 
+;;         Lr Ln
+;;             ? 
+;;                 B< vn I~~~ 
+;;                 B. 
+;;                     B$ B$ vr vr B+ vn I"
+;;                     BT I" BD B% vn I"% SL>FO
+;;                 S{header}
+;;     I!
+
+(setq lexical-binding t)
+
+(funcall (funcall (lambda (x)
+                    (funcall x x))
+                  (lambda (rec)
+                    (lambda (n)
+                      (if (= n 0)
+                          1
+                        (* n (funcall (funcall rec rec) (- n 1)))))))
+         5)
+
+;;
+(funcall (lambda (rep)
+           (funcall rep
+                    (s-concat (s-concat (funcall rep "D")
+                                        (funcall rep "L"))
+                              (s-concat (funcall rep "U")
+                                        (funcall rep "R")))))
+         (lambda (word)
+           (funcall (funcall (lambda (x)
+                               (funcall x x))
+                             (lambda (rec)
+                               (lambda (n)
+                                 (if (= n 0)
+                                     ""
+                                   (s-concat word (funcall (funcall rec rec) (- n 1)))))))
+                    100)))
+
+;;
+B$ L# B$ v# B. B. B$ v# S> B$ v# SF B. B$ v# SO B$ v# SL L= B$ B$ L$ B$ v$ v$ L& L@ ? B= v@ I! v= B. v= B$ B$ v& v& B- v@ I\" I~

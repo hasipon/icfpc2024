@@ -1,6 +1,3 @@
-// github.com/Johniel/contests
-// johniel/lambdaman/main.cpp
-
 #include <bits/stdc++.h>
 
 #define each(i, c) for (auto& i : c)
@@ -142,7 +139,7 @@ str solve(const vec<pair<pair<int, int>, pair<int, int>>>& blocked)
           int nj = j + dj[d];
           if (pi == ni && pj == nj) continue;
           if (is_inside(ni, nj)) {
-            if (vis[ni][nj]) return scc[i][j] = scc[ni][nj] = true;            
+            if (vis[ni][nj]) return scc[i][j] = scc[ni][nj] = true;
             if (rec(ni, nj)) {
               // if (scc[i][j]) throw "";
               return scc[i][j] = scc[ni][nj] = true;
@@ -172,7 +169,7 @@ str solve(const vec<pair<pair<int, int>, pair<int, int>>>& blocked)
       }
     }
   }
-  
+
   return ;
 }
 
@@ -211,7 +208,7 @@ int main(int argc, char *argv[])
           unless (a < b) swap(a, b);
           candidates.push_back(make_pair(a, b));
         }
-      }      
+      }
     }
     sort(candidates.begin(), candidates.end());
     candidates.erase(unique(candidates.begin(), candidates.end()), candidates.end());
@@ -234,6 +231,6 @@ int main(int argc, char *argv[])
 
     solve(blocked);
   }
-  
+
   return 0;
 }
