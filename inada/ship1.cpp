@@ -17,7 +17,10 @@
 #include <thread>
 #include <vector>
 
-#define mm_assert(cond) if (!(cond)) { std::cerr << "asserion failed: " << #cond << endl; throw 1; }
+#define DUMPV(v) { cerr << #v << "="; for (const auto& e: (v)) { cerr << e << " "; } cerr << endl; }
+#define DUMP(a) { cerr << #a << "=" << (a) << endl; }
+#define mm_assert(cond) if (!(cond)) { std::cerr << "assertion failed: " << #cond << endl; throw 1; }
+#define mm_assert2(cond, eval_) if (!(cond)) { std::cerr << "assertion failed: " << #cond << endl; {eval_;} throw 1; }
 
 using namespace std;
 using namespace std::chrono;
@@ -331,7 +334,7 @@ private:
 };
 
 
-class PathFinder {
+class MoveDatabse {
 	// やりたいこと
 	// クエリ1: p0, v0 から p1 に移動するときの v1の候補を返却する
 	//   探索時に使用する.
@@ -340,7 +343,7 @@ class PathFinder {
 
 public:
 	static const int T = 100;
-	static const int X = 10000;
+	static const int X = T * (T + 1) / 2;
 
 	// テーブル生成
 	// dp[t][x] = set(v)
@@ -371,6 +374,76 @@ public:
 		}
 	}
 
+	// クエリ1: p0, v0 から p1 に移動するときの v1の候補を返却する
+	vector<tuple<int, int, int> > VelCandidates(int x0, int y0, int vx0, int vy0, int x1, int y1) const {
+		vector<tuple<int, int, int> > candidates; // t, vx, vy
+		set<tuple<int, int> > used;
+
+		const int max_xy = max(abs(x1 - x0), abs(y1 - y0));
+		// const int t0 = max_xy * (max_xy + 1) / 2;
+		int max_t = T;
+		for (int t = 0; t < max_t ; t++) {
+			auto vxs = GetVel1d(t, x0, vx0, x1);
+			if (vxs.empty()) continue;
+
+			auto vys = GetVel1d(t, y0, vy0, y1);
+			if (vys.empty()) continue;
+
+			if (max_t == T) {
+				max_t = t + 3;
+			}
+
+			for (auto vx: vxs) {
+				for (auto vy: vys) {
+					if (used.find({vx, vy}) == used.end()) {
+						candidates.emplace_back(t, vx, vy);
+						used.emplace(vx, vy);
+					}
+				}
+			}
+		}
+
+		return candidates;
+	}
+
+	// クエリ2: p0, v0 から p1, v1 に移動するコマンド列を返却する
+	string GetCommands(
+		int t,
+		int x0, int y0, int vx0, int vy0,
+		int x1, int y1, int vx1, int vy1) const {
+		mm_assert2(0 <= t && t < T, DUMP(t));
+		auto xa = GetAcc1d(t, x0, vx0, x1, vx1);
+		auto ya = GetAcc1d(t, y0, vy0, y1, vy1);
+		mm_assert(!xa.empty());
+		mm_assert(!ya.empty());
+		vector<char> ops;
+		for (int i = 0; i < t; i++) {
+			if (ya[i] == 1) ops.emplace_back('8' + xa[i]);
+			if (ya[i] == 0) ops.emplace_back('5' + xa[i]);
+			if (ya[i] == -1) ops.emplace_back('2' + xa[i]);
+		}
+		return {ops.begin(), ops.end()};
+	}
+
+
+	// 2次元 移動可能判定
+	// 初期状態: t, x, y, vx, vy = x0, y0, vx0, vy0
+	// 終了状態: t, x, y, vx, vy = x1, y1, vx1, vy1
+	bool CanMove2d(
+		int t,
+		int x0, int y0, int vx0, int vy0,
+		int x1, int y1, int vx1, int vy1) const {
+		return CanMove1d(t, x0, vx0, x1, vx1) &&
+		       CanMove1d(t, y0, vy0, y1, vy1);
+	}
+
+	// 1次元 移動可能判定
+	// 初期状態: t, x, v = 0, x0, v0
+	// 終了状態: t, x, v = t, x1, v1
+	bool CanMove1d(int t, int x0, int v0, int x1, int v1) const {
+		return CanMove1d(t, x1 - x0, v1 - v0);
+	}
+
 	// 1次元 移動可能判定
 	// 初期状態: t, x, v = 0, 0, 0
 	// 終了状態: t, x, v = t, x, v
@@ -397,10 +470,10 @@ public:
 		bool minus = x < 0;
 		if (minus) {
 			x *= -1;
-			v0 *= -1;
 		}
 
-		cerr << "t,x=" << t << " " << x << endl;
+		mm_assert2(t < T, DUMP(t));
+		mm_assert2(x < X, DUMP(x));
 		auto vs = vector(dp[t][x].begin(), dp[t][x].end());
 		if (minus) {
 			for (auto &v: vs) {
@@ -416,10 +489,18 @@ public:
 	}
 
 	// 1次元 加速度の列を返す
+	// 初期状態: t, x, v = 0, x0, v0
+	// 終了状態: t, x, v = t, x1, v1
+	vector<char> GetAcc1d(int t, int x0, int v0, int x1, int v1) const {
+		return GetAcc1d(t, x1 - (x0 + v0 * t), v1 - v0);
+	}
+
+	// 1次元 加速度の列を返す
 	// 初期状態: t, x, v = 0, 0, 0
 	// 終了状態: t, x, v = t, x, v
 	vector<char> GetAcc1d(int t, int x, int v) const {
-		cerr << "Query; x, t, v = " << x << " " << t << " " << v << " " << endl;
+		mm_assert(0 <= t && t < T);
+		// cerr << "Query; t, x, v = " << t << " " << x << " " << v << " " << endl;
 		if (t == 0) {
 			if (x == 0 && v == 0) return {0};
 			return {};
@@ -431,6 +512,7 @@ public:
 			v *= -1;
 		}
 
+		mm_assert(x < X);
 		if (dp[t][x].find(v) == dp[t][x].end()) {
 			return {};
 		}
@@ -453,27 +535,23 @@ public:
 				}
 			}
 
-			if (xx == -1) {
-				cerr << "not found" << endl;
-				throw 1;
-			}
-
+			mm_assert(xx != -1);
 			moves.emplace_back(minus ? -aa : aa);
 			x = xx;
 			v -= aa;
 		}
 
 		reverse(moves.begin(), moves.end());
-		cerr << "Ans: "; for (auto c: moves) { cerr << int(c) << " "; } cerr << endl;
+		// cerr << "Ans: "; for (auto c: moves) { cerr << int(c) << " "; } cerr << endl;
 		return moves;
 	}
 
 	void LookTable(int x) {
-		if (!(0 <= x && x < dp.size())) return;
-
 		for (int t = 0; t < dp.size(); t++) {
-			for (auto v: dp[t][x]) {
-				cerr << "x, t, v = " << x << " " << t << " " << v << " " << endl;
+			if (0 <= x && x < dp[t].size()) {
+				for (auto v: dp[t][x]) {
+					cerr << "x, t, v = " << x << " " << t << " " << v << " " << endl;
+				}
 			}
 		}
 	}
@@ -537,20 +615,42 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-	PathFinder pf;
-
-	pf.BuildTable();
-	pf.LookTable(1);
-
-	pf.TestGetAcc1d();
-	pf.TestGetVel1d();
-
-	exit(0);
+	MoveDatabse db;
+	db.BuildTable();
+	db.TestGetAcc1d();
+	db.TestGetVel1d();
 
     ifstream ifs(argv[1]);
     auto vg = input(ifs);
     ifs.close();
     cerr << "vg.size()=" << vg.size() << endl;
+
+	int t = 0;
+	int x = 0;
+	int y = 0;
+	int vx = 0;
+	int vy = 0;
+	string cmds;
+	for (int i = 0; i < vg.size(); i++) {
+		auto debug = vector{x, y, vx, vy, (int)vg[i].first, (int)vg[i].second};
+		DUMPV(debug);
+		auto candidates = db.VelCandidates(x, y, vx, vy, vg[i].first, vg[i].second);
+		mm_assert(!candidates.empty());
+		auto [dt, vx1, vy1] = candidates[0];
+		cerr << i+1 << "/" << vg.size() << " candidate dt, vx1, vy1 = " << dt << " " << vx1 << " " << vy1 << endl;
+		cmds += db.GetCommands(dt, x, y, vx, vy, vg[i].first, vg[i].second, vx1, vy1);
+		cerr << "GetCommands ok" << endl;
+		t += dt;
+		x = vg[i].first;
+		y = vg[i].second;
+		vx = vx1;
+		vy = vy1;
+		// cerr << cmds << endl;
+	}
+	cout << cmds << endl;
+
+	// TODO
+	exit(0);
 
     ChokudaiSearch cs(vg, envInt("AUTO", 0));
     cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 1000));
