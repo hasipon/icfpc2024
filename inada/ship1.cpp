@@ -95,7 +95,7 @@ public:
             if (vys.empty()) continue;
 
             if (max_t == T) {
-                max_t = t + 3;
+                max_t = t + 5;
             }
 
             for (auto vx: vxs) {
@@ -380,8 +380,8 @@ public:
         return bests_;
     }
 
-    void Run(int target_depth, int timeout_ms = 2000) {
-        auto f = [this, target_depth, timeout_ms]() {
+    void Run(int timeout_ms = 2000) {
+        auto f = [this, timeout_ms]() {
             const auto t0 = high_resolution_clock::now();
             while (true) {
                 const auto updated = RunInternal(20);
@@ -434,17 +434,24 @@ private:
                 auto [x1, y1] = stage_data_[index];
                 auto candidates = db_.FindCandidates(x0, y0, node.vx, node.vy, x1, y1);
                 for (const auto &[dt, vx1, vy1]: candidates) {
-                    tmp_node.t = node.t + dt;
-                    tmp_node.vx = vx1;
-                    tmp_node.vy = vy1;
-                    tmp_node.parent = std::make_shared<SearchNode>(node);
-
                     {
                         std::lock_guard lock(*mutex_[index]);
                         auto &best = bests_[index];
-                        if (tmp_node.t < best.t) {
-                            best = tmp_node;
+                        if (node.t + dt < best.t) {
+                            best.t = node.t + dt;
+                            best.vx = vx1;
+                            best.vy = vy1;
+                            best.parent = std::make_shared<SearchNode>(node);
                         }
+                    }
+
+                    {
+                        std::lock_guard lock(*mutex_[index + 1]);
+                        tmp_node.t = node.t + dt;
+                        tmp_node.vx = vx1;
+                        tmp_node.vy = vy1;
+                        tmp_node.parent = std::make_shared<SearchNode>(node);
+                        ranking_[index + 1].push(tmp_node);
                     }
 
                     /*
@@ -461,10 +468,6 @@ private:
                     }
                     */
 
-                    {
-                        std::lock_guard lock(*mutex_[index + 1]);
-                        ranking_[index + 1].push(tmp_node);
-                    }
                 }
             }
 
