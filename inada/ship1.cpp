@@ -42,16 +42,6 @@ const Int dx[] = {-1, 0,  1, -1, 0, 1, -1, 0, 1};
 const Int dy[] = {-1, -1,  -1, 0, 0, 0, 1, 1, 1};
 using StageData = vector<pair<Int, Int>>;
 
-struct State {
-    Int vx, vy, px, py;
-    bool operator < (const State &rhs) const {
-        if(vx != rhs.vx) return vx < rhs.vx;
-        if(vy != rhs.vy) return vy < rhs.vy;
-        if(px != rhs.px) return px < rhs.px;
-        return py < rhs.py;
-    }
-};
-
 StageData input(istream& is){
 	StageData vg;
     int x, y;
@@ -65,13 +55,7 @@ StageData input(istream& is){
     return vg;
 }
 
-Int gcd(Int a, Int b){
-    if(b == 0) return a;
-    return gcd(b, a % b);
-}
-
 double abs(pair<Int, Int> a) {
-	// return max(abs(a.first), abs(a.second));
 	return sqrt(a.first * a.first + a.second * a.second);
 }
 
@@ -118,13 +102,13 @@ public:
 		m_.erase(--m_.end());
 	}
 
-	[[nodiscard]] bool empty() const { return m_.empty(); }
+	bool empty() const { return m_.empty(); }
 
-	[[nodiscard]] size_t size() const { return m_.size(); }
+	size_t size() const { return m_.size(); }
 
 	void clear() { m_.clear(); }
 
-	[[nodiscard]] const std::multiset<T>& data() const { return m_; }
+	const std::multiset<T>& data() const { return m_; }
 
 private:
 	int n = envInt("WIDTH", 1000);
@@ -156,7 +140,7 @@ public:
 	ChokudaiSearch& operator=(const ChokudaiSearch&) = delete;
 	ChokudaiSearch() = delete;
 
-	explicit ChokudaiSearch(StageData stage_data, bool auto_target)
+	explicit ChokudaiSearch(StageData stage_data)
 		: stage_data_(std::move(stage_data)) {
 		int maxTurn = envInt("MAXTURN", 1000);
 		ranking_.resize(maxTurn+ 1);
@@ -343,11 +327,11 @@ class MoveDatabse {
 
 public:
 	static const int T = 100;
-	static const int X = T * (T + 1) / 2;
+	static const int X = T * T;
 
 	// テーブル生成
 	// dp[t][x] = set(v)
-	// 1ターン後にxに到達する時のv (存在しない場合は空)
+	// tターン後にxに到達する時のv (存在しない場合は空)
 	void BuildTable() {
 		dp.resize(T);
 		for (int t = 0; t < T; t++) {
@@ -375,7 +359,7 @@ public:
 	}
 
 	// クエリ1: p0, v0 から p1 に移動するときの v1の候補を返却する
-	vector<tuple<int, int, int> > VelCandidates(int x0, int y0, int vx0, int vy0, int x1, int y1) const {
+	vector<tuple<int, int, int> > FindCandidates(int x0, int y0, int vx0, int vy0, int x1, int y1) const {
 		vector<tuple<int, int, int> > candidates; // t, vx, vy
 		set<tuple<int, int> > used;
 
@@ -416,49 +400,11 @@ public:
 		auto ya = GetAcc1d(t, y0, vy0, y1, vy1);
 		mm_assert(!xa.empty());
 		mm_assert(!ya.empty());
-		vector<char> ops;
+		vector<char> ops(t);
 		for (int i = 0; i < t; i++) {
-			if (ya[i] == 1) ops.emplace_back('8' + xa[i]);
-			if (ya[i] == 0) ops.emplace_back('5' + xa[i]);
-			if (ya[i] == -1) ops.emplace_back('2' + xa[i]);
+			ops[i] = '5' + 3 * ya[i] + xa[i];
 		}
 		return {ops.begin(), ops.end()};
-	}
-
-
-	// 2次元 移動可能判定
-	// 初期状態: t, x, y, vx, vy = x0, y0, vx0, vy0
-	// 終了状態: t, x, y, vx, vy = x1, y1, vx1, vy1
-	bool CanMove2d(
-		int t,
-		int x0, int y0, int vx0, int vy0,
-		int x1, int y1, int vx1, int vy1) const {
-		return CanMove1d(t, x0, vx0, x1, vx1) &&
-		       CanMove1d(t, y0, vy0, y1, vy1);
-	}
-
-	// 1次元 移動可能判定
-	// 初期状態: t, x, v = 0, x0, v0
-	// 終了状態: t, x, v = t, x1, v1
-	bool CanMove1d(int t, int x0, int v0, int x1, int v1) const {
-		return CanMove1d(t, x1 - x0, v1 - v0);
-	}
-
-	// 1次元 移動可能判定
-	// 初期状態: t, x, v = 0, 0, 0
-	// 終了状態: t, x, v = t, x, v
-	bool CanMove1d(int t, int x, int v) const {
-		if (t == 0) {
-			if (x == 0 && v == 0) return true;
-			return false;
-		}
-
-		if (x < 0) {
-			x *= -1;
-			v *= -1;
-		}
-
-		return dp[t][x].find(v) != dp[t][x].end();
 	}
 
 	// 1次元 到達時の速度の列を返す
@@ -605,9 +551,51 @@ public:
 	}
 
 private:
-	// table[t][x] = v;
+	// dp[t][x] = v;
 	vector<vector<set<int> > > dp;
 };
+
+string solve_greedy(const MoveDatabse &db, const vector<pair<Int, Int> > &vg) {
+	int t = 0;
+	int x = 0;
+	int y = 0;
+	int vx = 0;
+	int vy = 0;
+	string cmds;
+	for (int i = 0; i < vg.size(); i++) {
+		auto debug = vector{x, y, vx, vy, (int)vg[i].first, (int)vg[i].second};
+		DUMPV(debug);
+		auto candidates = db.FindCandidates(x, y, vx, vy, vg[i].first, vg[i].second);
+		mm_assert(!candidates.empty());
+		auto [dt, vx1, vy1] = candidates[0];
+		cerr << i+1 << "/" << vg.size() << " candidate dt, vx1, vy1 = " << dt << " " << vx1 << " " << vy1 << endl;
+		cmds += db.GetCommands(dt, x, y, vx, vy, vg[i].first, vg[i].second, vx1, vy1);
+		cerr << "GetCommands ok" << endl;
+		t += dt;
+		x = vg[i].first;
+		y = vg[i].second;
+		vx = vx1;
+		vy = vy1;
+	}
+	return cmds;
+}
+
+string solve_chokudai_search(const MoveDatabse &db, const StageData& vg) {
+    ChokudaiSearch cs(vg, envInt("AUTO", 0));
+    cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 1000));
+    auto bests = cs.GetBests();
+    for (const auto &best: bests) {
+	    if (best.next_index == vg.size()) {
+	    	vector<char> moves;
+		    for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
+			    moves.push_back('1' + ptr->dir);
+		    }
+		    reverse(moves.begin(), moves.end());
+	    	return {moves.begin(), moves.end()};
+	    }
+    }
+	return "";
+}
 
 int main(int argc, char *argv[]) {
     if (argc <= 1) {
@@ -625,66 +613,6 @@ int main(int argc, char *argv[]) {
     ifs.close();
     cerr << "vg.size()=" << vg.size() << endl;
 
-	int t = 0;
-	int x = 0;
-	int y = 0;
-	int vx = 0;
-	int vy = 0;
-	string cmds;
-	for (int i = 0; i < vg.size(); i++) {
-		auto debug = vector{x, y, vx, vy, (int)vg[i].first, (int)vg[i].second};
-		DUMPV(debug);
-		auto candidates = db.VelCandidates(x, y, vx, vy, vg[i].first, vg[i].second);
-		mm_assert(!candidates.empty());
-		auto [dt, vx1, vy1] = candidates[0];
-		cerr << i+1 << "/" << vg.size() << " candidate dt, vx1, vy1 = " << dt << " " << vx1 << " " << vy1 << endl;
-		cmds += db.GetCommands(dt, x, y, vx, vy, vg[i].first, vg[i].second, vx1, vy1);
-		cerr << "GetCommands ok" << endl;
-		t += dt;
-		x = vg[i].first;
-		y = vg[i].second;
-		vx = vx1;
-		vy = vy1;
-		// cerr << cmds << endl;
-	}
-	cout << cmds << endl;
-
-	// TODO
-	exit(0);
-
-    ChokudaiSearch cs(vg, envInt("AUTO", 0));
-    cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 1000));
-    auto bests = cs.GetBests();
-    vector<int> moves;
-    for (const auto &best: bests) {
-	    if (best.next_index == vg.size()) {
-		    for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
-			    moves.push_back(ptr->dir + 1);
-		    }
-		    break;
-	    }
-    }
-
-    if (!moves.empty()) {
-	    cerr << "score: " << moves.size() << endl;
-	    reverse(moves.begin(), moves.end());
-	    for (auto dir: moves) {
-		    cout << dir;
-	    }
-	    cout << endl;
-    } else {
-	    cerr << "Not found" << endl;
-	    if (!bests.empty()) {
-		    auto &best = bests.back();
-		    cerr << "next_index=" << best.next_index << " score=" << best.score << endl;
-		    for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
-			    moves.push_back(ptr->dir + 1);
-		    }
-		    reverse(moves.begin(), moves.end());
-		    for (auto dir: moves) {
-			    cerr << dir;
-		    }
-		    cerr << endl;
-	    }
-    }
+	cout << solve_greedy(db, vg) << endl;
+	cout << solve_chokudai_search(db, vg) << endl;
 }
