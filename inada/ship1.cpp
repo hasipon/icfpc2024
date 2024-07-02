@@ -1,4 +1,4 @@
-#include <algorithm>
+﻿#include <algorithm>
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -37,292 +37,9 @@ std::string envStr(const char *name, const char *defaultValue) {
     return "";
 }
 
-using Int = long long;
-const Int dx[] = {-1, 0, 1, -1, 0, 1, -1, 0, 1};
-const Int dy[] = {-1, -1, -1, 0, 0, 0, 1, 1, 1};
-using StageData = vector<pair<Int, Int> >;
+using StageData = vector<tuple<int, int> >;
 
-StageData input(istream &is) {
-    StageData vg;
-    int x, y;
-    string s;
-    while (getline(is, s)) {
-        if (s[0] == '#') continue;
-        stringstream ss(s);
-        ss >> x >> y;
-        vg.push_back(make_pair(x, y));
-    }
-    return vg;
-}
-
-double abs(pair<Int, Int> a) {
-    return sqrt(a.first * a.first + a.second * a.second);
-}
-
-template<typename T>
-class Ranking {
-public:
-    bool is_rankin(const T &value) {
-        return m_.size() < n ? true : min_element() < value;
-    }
-
-    void push(const T &value) {
-        m_.insert(value);
-        if (size() == n + 1) {
-            pop_min();
-        }
-    }
-
-    T min_element() {
-        assert(!empty());
-        return *m_.begin();
-    }
-
-    const T &min_element() const {
-        assert(!empty());
-        return *m_.begin();
-    }
-
-    T max_element() {
-        assert(!empty());
-        return *m_.rbegin();
-    }
-
-    const T &max_element() const {
-        assert(!empty());
-        return *m_.rbegin();
-    }
-
-    void pop_min() {
-        assert(!empty());
-        m_.erase(m_.begin());
-    }
-
-    void pop_max() {
-        assert(!empty());
-        m_.erase(--m_.end());
-    }
-
-    bool empty() const { return m_.empty(); }
-
-    size_t size() const { return m_.size(); }
-
-    void clear() { m_.clear(); }
-
-    const std::multiset<T> &data() const { return m_; }
-
-private:
-    int n = envInt("WIDTH", 1000);
-    std::multiset<T> m_;
-};
-
-class ChokudaiSearch {
-public:
-    struct DirListNode {
-        uint8_t dir;
-        std::shared_ptr<DirListNode> parent;
-
-        DirListNode() : dir(0), parent(nullptr) {
-        }
-
-        DirListNode(const int dir, std::shared_ptr<DirListNode> parent)
-            : dir(dir), parent(std::move(parent)) {
-        }
-    };
-
-    struct SearchNode {
-        int next_index{};
-        double score{};
-        Int px{}, py{};
-        Int vx{}, vy{};
-        shared_ptr<DirListNode> dir_list;
-        bool operator<(const SearchNode &o) const { return score < o.score; }
-    };
-
-    ChokudaiSearch(const ChokudaiSearch &) = delete;
-
-    ChokudaiSearch(ChokudaiSearch &&) = delete;
-
-    ChokudaiSearch &operator=(const ChokudaiSearch &) = delete;
-
-    ChokudaiSearch() = delete;
-
-    explicit ChokudaiSearch(StageData stage_data)
-        : stage_data_(std::move(stage_data)) {
-        int maxTurn = envInt("MAXTURN", 1000);
-        ranking_.resize(maxTurn + 1);
-        bests_.resize(maxTurn);
-
-        mutex_.resize(maxTurn + 1);
-        for (auto &m: mutex_) {
-            m = std::make_unique<std::mutex>();
-        }
-
-        SearchNode node;
-        node.next_index = 0;
-        node.score = 0;
-        node.px = 0;
-        node.py = 0;
-        node.vx = 0;
-        node.vy = 0;
-
-        while (stage_data_[node.next_index].first == node.px && stage_data_[node.next_index].second == node.py) {
-            node.next_index++;
-        }
-        ranking_[0].push(node);
-    }
-
-    std::vector<SearchNode> GetBests() const {
-        std::vector<SearchNode> ret;
-        for (const auto &best: bests_) {
-            if (0 < best.next_index) {
-                ret.push_back(best);
-            }
-        }
-        return ret;
-    }
-
-    void Run(int target_depth, int timeout_ms = 2000) {
-        auto f = [this, target_depth, timeout_ms]() {
-            const auto t0 = high_resolution_clock::now();
-            while (true) {
-                const auto updated = RunInternal(target_depth, 20);
-                if (!updated) {
-                    break;
-                }
-
-                const auto t1 = high_resolution_clock::now();
-                const auto ms = duration_cast<milliseconds>(t1 - t0).count();
-                if (timeout_ms < ms) {
-                    break;
-                }
-            }
-        };
-
-        // const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
-        const auto n_thread = 1;
-        std::vector<std::thread> threads;
-        threads.reserve(n_thread);
-        for (int i = 0; i < n_thread; i++) {
-            threads.emplace_back(f);
-        }
-        for (int i = 0; i < n_thread; i++) {
-            threads[i].join();
-        }
-    }
-
-private:
-    bool RunInternal(int target_depth, int loop_count) {
-        SearchNode node, tmp_node;
-        bool updated = true;
-
-        for (int loop = 0; updated && loop < loop_count; ++loop) {
-            updated = false;
-
-            for (int depth = 0; depth < target_depth; ++depth) {
-                if (base_turn_ + depth == bests_.size()) {
-                    break;
-                } {
-                    std::lock_guard lock(*mutex_[depth]);
-                    auto &prev = ranking_[depth];
-                    if (prev.empty()) {
-                        continue;
-                    }
-
-                    node = prev.max_element();
-                    prev.pop_max();
-                    if (node.next_index == stage_data_.size()) {
-                        continue;
-                    }
-
-                    const auto h = Hash(node.px, node.px, node.vx, node.vy, node.next_index);
-                    const auto h2 = static_cast<uint16_t>(h ^ h >> 16 ^ h >> 32 ^ h >> 48); {
-                        std::lock_guard g_lock(g_mutex_);
-                        auto &hash_pool = weak_hash_;
-                        if (hash_pool[h2] == h) {
-                            continue;
-                        }
-                        hash_pool[h2] = h;
-                    }
-                    updated = true;
-                }
-
-                for (int dir = 0; dir < 9; dir++) {
-                    const auto [npx, npy, nvx, nvy, nni] = Step(node.px, node.py, node.vx, node.vy, node.next_index,
-                                                                dir); {
-                        std::lock_guard lock(*mutex_[depth]);
-                        auto &best = bests_[depth];
-                        if (best.next_index < nni) {
-                            // if (depth + 1 == bests_.size()) { cerr << "nni:" << nni << endl; }
-                            best.next_index = nni;
-                            best.px = npx;
-                            best.py = npy;
-                            best.vx = nvx;
-                            best.vy = nvy;
-                            best.dir_list = std::make_shared<DirListNode>(dir, node.dir_list);
-                        }
-                    }
-
-                    tmp_node.score = EvalFunc(npx, npy, nvx, nvy, nni); {
-                        std::lock_guard lock(*mutex_[depth + 1]);
-                        if (ranking_[depth + 1].is_rankin(tmp_node)) {
-                            tmp_node.next_index = nni;
-                            tmp_node.px = npx;
-                            tmp_node.py = npy;
-                            tmp_node.vx = nvx;
-                            tmp_node.vy = nvy;
-                            tmp_node.dir_list = std::make_shared<DirListNode>(dir, node.dir_list);
-                            ranking_[depth + 1].push(tmp_node);
-                        }
-                    }
-                }
-            }
-        }
-
-        return updated;
-    }
-
-    [[nodiscard]] std::tuple<Int, Int, Int, Int, int> Step(Int px, Int py, Int vx, Int vy, int next_index,
-                                                           int dir) const {
-        vx += dx[dir];
-        vy += dy[dir];
-        px += vx;
-        py += vy;
-        while (stage_data_[next_index].first == px && stage_data_[next_index].second == py) {
-            next_index++;
-        }
-        return {px, py, vx, vy, next_index};
-    }
-
-    [[nodiscard]] double EvalFunc(Int px, Int py, Int vx, Int vy, int next_index) const {
-        const auto tp = stage_data_[next_index];
-        const auto sp = next_index == 0 ? make_pair<Int, Int>(0, 0) : stage_data_[next_index - 1];
-        const double w1 = abs(make_pair<Int, Int>(tp.first - px - vx, tp.second - py - vy));
-        const double w2 = abs(make_pair<Int, Int>(tp.first - sp.first, tp.second - sp.second));
-        return 1000.0 * (next_index + (1.0 - w1 / w2));
-    }
-
-    static uint64_t Hash(Int px, Int py, Int vx, Int vy, int next_index) {
-        uint64_t ret = 37;
-        ret = ret * 573292817ULL + next_index;
-        ret = ret * 573292817ULL + px;
-        ret = ret * 573292817ULL + py;
-        ret = ret * 573292817ULL + vx;
-        ret = ret * 573292817ULL + vy;
-        return ret;
-    }
-
-    int base_turn_ = 0;
-    StageData stage_data_;
-    std::array<uint64_t, 1 << 16> weak_hash_;
-    std::vector<SearchNode> bests_;
-    std::vector<Ranking<SearchNode> > ranking_;
-    std::vector<std::unique_ptr<std::mutex> > mutex_;
-    std::mutex g_mutex_;
-};
-
-
-class MoveDatabse {
+class MoveDatabase {
     // やりたいこと
     // クエリ1: p0, v0 から p1 に移動するときの v1の候補を返却する
     //   探索時に使用する.
@@ -559,7 +276,222 @@ private:
     vector<vector<set<int> > > dp;
 };
 
-string solve_greedy(const MoveDatabse &db, const vector<pair<Int, Int> > &vg) {
+StageData input(istream &is) {
+    StageData vg;
+    int x, y;
+    string s;
+    while (getline(is, s)) {
+        if (s[0] == '#') continue;
+        stringstream ss(s);
+        ss >> x >> y;
+        vg.push_back(make_pair(x, y));
+    }
+    return vg;
+}
+
+template<typename T>
+class Ranking {
+public:
+    void push(const T &value) {
+        m_.insert(value);
+        if (size() == n + 1) {
+            pop_min();
+        }
+    }
+
+    T min_element() {
+        assert(!empty());
+        return *m_.begin();
+    }
+
+    const T &min_element() const {
+        assert(!empty());
+        return *m_.begin();
+    }
+
+    T max_element() {
+        assert(!empty());
+        return *m_.rbegin();
+    }
+
+    const T &max_element() const {
+        assert(!empty());
+        return *m_.rbegin();
+    }
+
+    void pop_min() {
+        assert(!empty());
+        m_.erase(m_.begin());
+    }
+
+    void pop_max() {
+        assert(!empty());
+        m_.erase(--m_.end());
+    }
+
+    bool empty() const { return m_.empty(); }
+
+    size_t size() const { return m_.size(); }
+
+    void clear() { m_.clear(); }
+
+    const std::multiset<T> &data() const { return m_; }
+
+private:
+    int n = envInt("WIDTH", 1000);
+    std::multiset<T> m_;
+};
+
+class ChokudaiSearch {
+public:
+    struct SearchNode {
+        int t{}, vx{}, vy{};
+        std::shared_ptr<SearchNode> parent;
+        bool operator<(const SearchNode &o) const { return t > o.t; }
+    };
+
+    ChokudaiSearch(const ChokudaiSearch &) = delete;
+
+    ChokudaiSearch(ChokudaiSearch &&) = delete;
+
+    ChokudaiSearch &operator=(const ChokudaiSearch &) = delete;
+
+    ChokudaiSearch() = delete;
+
+    explicit ChokudaiSearch(const MoveDatabase& db, StageData stage_data)
+        : db_(db), stage_data_(std::move(stage_data)) {
+        ranking_.resize(stage_data_.size() + 1);
+        bests_.resize(stage_data_.size());
+        mutex_.resize(stage_data_.size() + 1);
+
+        for (auto &m: mutex_) {
+            m = std::make_unique<std::mutex>();
+        }
+
+        for (auto &best: bests_) {
+            best.t = INT_MAX;
+        }
+
+        SearchNode node{0, 0, 0, nullptr};
+        ranking_[0].push(node);
+    }
+
+    std::vector<SearchNode> GetBests() const {
+        return bests_;
+    }
+
+    void Run(int target_depth, int timeout_ms = 2000) {
+        auto f = [this, target_depth, timeout_ms]() {
+            const auto t0 = high_resolution_clock::now();
+            while (true) {
+                const auto updated = RunInternal(20);
+                if (!updated) {
+                    break;
+                }
+
+                const auto t1 = high_resolution_clock::now();
+                const auto ms = duration_cast<milliseconds>(t1 - t0).count();
+                if (timeout_ms < ms) {
+                    break;
+                }
+            }
+        };
+
+        // const auto n_thread = std::max(std::thread::hardware_concurrency(), 1u);
+        const auto n_thread = 1;
+        std::vector<std::thread> threads;
+        threads.reserve(n_thread);
+        for (int i = 0; i < n_thread; i++) {
+            threads.emplace_back(f);
+        }
+        for (int i = 0; i < n_thread; i++) {
+            threads[i].join();
+        }
+    }
+
+private:
+    bool RunInternal(int loop_count) {
+        SearchNode node, tmp_node;
+        bool updated = true;
+
+        for (int loop = 0; updated && loop < loop_count; ++loop) {
+            updated = false;
+
+            for (int index = 0; index < stage_data_.size(); ++index) {
+                {
+                    std::lock_guard lock(*mutex_[index]);
+                    auto &prev = ranking_[index];
+                    if (prev.empty()) {
+                        continue;
+                    }
+
+                    node = prev.max_element();
+                    prev.pop_max();
+                    updated = true;
+                }
+
+                auto [x0, y0] = index == 0 ? make_tuple(0, 0) : stage_data_[index-1];
+                auto [x1, y1] = stage_data_[index];
+                auto candidates = db_.FindCandidates(x0, y0, node.vx, node.vy, x1, y1);
+                for (const auto &[dt, vx1, vy1]: candidates) {
+                    tmp_node.t = node.t + dt;
+                    tmp_node.vx = vx1;
+                    tmp_node.vy = vy1;
+                    tmp_node.parent = std::make_shared<SearchNode>(node);
+
+                    {
+                        std::lock_guard lock(*mutex_[index]);
+                        auto &best = bests_[index];
+                        if (tmp_node.t < best.t) {
+                            best = tmp_node;
+                        }
+                    }
+
+                    /*
+                    {
+                        const auto h = Hash(node.t + dt, vx1, vy1);
+                        const auto h2 = static_cast<uint16_t>(h ^ h >> 16 ^ h >> 32 ^ h >> 48);
+
+                        std::lock_guard g_lock(g_mutex_);
+                        auto &hash_pool = weak_hash_;
+                        if (hash_pool[h2] == h) {
+                            continue;
+                        }
+                        hash_pool[h2] = h;
+                    }
+                    */
+
+                    {
+                        std::lock_guard lock(*mutex_[index + 1]);
+                        ranking_[index + 1].push(tmp_node);
+                    }
+                }
+            }
+
+        }
+
+        return updated;
+    }
+
+
+    static uint64_t Hash(int t, int vx, int vy) {
+        uint64_t ret = 37;
+        ret = ret * 573292817ULL + t;
+        ret = ret * 573292817ULL + vx;
+        ret = ret * 573292817ULL + vy;
+        return ret;
+    }
+
+    const MoveDatabase& db_;
+    StageData stage_data_;
+    std::array<uint64_t, 1 << 16> weak_hash_{};
+    std::vector<SearchNode> bests_;
+    std::vector<Ranking<SearchNode> > ranking_;
+    std::vector<std::unique_ptr<std::mutex> > mutex_;
+    std::mutex g_mutex_{};
+};
+
+string solve_greedy(const MoveDatabase &db, const StageData &vg) {
     int t = 0;
     int x = 0;
     int y = 0;
@@ -567,38 +499,46 @@ string solve_greedy(const MoveDatabse &db, const vector<pair<Int, Int> > &vg) {
     int vy = 0;
     string cmds;
     for (int i = 0; i < vg.size(); i++) {
-        auto debug = vector{x, y, vx, vy, (int) vg[i].first, (int) vg[i].second};
+        auto [x1, y1] = vg[i];
+        auto debug = vector{x, y, vx, vy, x1, y1};
         DUMPV(debug);
-        auto candidates = db.FindCandidates(x, y, vx, vy, vg[i].first, vg[i].second);
+        auto candidates = db.FindCandidates(x, y, vx, vy, x1, y1);
         mm_assert(!candidates.empty());
         auto [dt, vx1, vy1] = candidates[0];
         cerr << i + 1 << "/" << vg.size() << " candidate dt, vx1, vy1 = " << dt << " " << vx1 << " " << vy1 << endl;
-        cmds += db.GetCommands(dt, x, y, vx, vy, vg[i].first, vg[i].second, vx1, vy1);
+        cmds += db.GetCommands(dt, x, y, vx, vy, x1, y1, vx1, vy1);
         cerr << "GetCommands ok" << endl;
         t += dt;
-        x = vg[i].first;
-        y = vg[i].second;
+        x = x1;
+        y = y1;
         vx = vx1;
         vy = vy1;
     }
     return cmds;
 }
 
-string solve_chokudai_search(const MoveDatabse &db, const StageData &vg) {
-    ChokudaiSearch cs(vg);
-    cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 1000));
-    auto bests = cs.GetBests();
-    for (const auto &best: bests) {
-        if (best.next_index == vg.size()) {
-            vector<char> moves;
-            for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
-                moves.push_back('1' + ptr->dir);
-            }
-            reverse(moves.begin(), moves.end());
-            return {moves.begin(), moves.end()};
-        }
+string solve_chokudai_search(const MoveDatabase &db, const StageData &vg) {
+    ChokudaiSearch cs(db, vg);
+    cs.Run(envInt("TIMEOUT", 1000));
+    auto node = cs.GetBests().back();
+    auto [x1, y1] = vg.back();
+    deque<string> cmds_vec;
+    for (int i = static_cast<int>(vg.size()) - 2; 0 <= i; i--) {
+        auto [x0, y0] = vg[i];
+        auto cmds = db.GetCommands(node.t - node.parent->t, x0, y0, node.parent->vx, node.parent->vy, x1, y1, node.vx, node.vy);
+        cmds_vec.push_front(cmds);
+        x1 = x0;
+        y1 = y0;
+        node = *node.parent;
     }
-    return "";
+    auto cmds = db.GetCommands(node.t, 0, 0, 0, 0, x1, y1, node.vx, node.vy);
+    cmds_vec.push_front(cmds);
+
+    string ret;
+    for (const auto &cmd : cmds_vec) {
+        ret += cmd;
+    }
+    return ret;
 }
 
 int main(int argc, char *argv[]) {
@@ -607,7 +547,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    MoveDatabse db;
+    MoveDatabase db;
     db.BuildTable();
     db.TestGetAcc1d();
     db.TestGetVel1d();
