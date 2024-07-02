@@ -585,7 +585,7 @@ string solve_greedy(const MoveDatabse &db, const vector<pair<Int, Int> > &vg) {
 }
 
 string solve_chokudai_search(const MoveDatabse &db, const StageData &vg) {
-    ChokudaiSearch cs(vg, envInt("AUTO", 0));
+    ChokudaiSearch cs(vg);
     cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 1000));
     auto bests = cs.GetBests();
     for (const auto &best: bests) {
