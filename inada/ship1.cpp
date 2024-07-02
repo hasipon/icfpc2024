@@ -1,17 +1,23 @@
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
+#include <sstream>
 #include <iostream>
-#include <string>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <queue>
+#include <random>
 #include <set>
+#include <string>
 #include <thread>
 #include <vector>
-#include <cstdlib>
-#include <random>
+
+#define mm_assert(cond) if (!(cond)) { std::cerr << "asserion failed: " << #cond << endl; throw 1; }
 
 using namespace std;
 using namespace std::chrono;
@@ -138,7 +144,7 @@ public:
 		double score{};
 		Int px{}, py{};
 		Int vx{}, vy{};
-		std::shared_ptr<DirListNode> dir_list;
+		shared_ptr<DirListNode> dir_list;
 		bool operator<(const SearchNode& o) const { return score < o.score; }
 	};
 
@@ -332,9 +338,10 @@ class PathFinder {
 	// クエリ2: p0, v0 から p1, v1 に移動する a の配列を返却する
 	//   経路復元時に使用する.
 
-	static const int T = 150;
-	static const int X = 10000;
 public:
+	static const int T = 100;
+	static const int X = 10000;
+
 	// テーブル生成
 	// dp[t][x] = set(v)
 	// 1ターン後にxに到達する時のv (存在しない場合は空)
@@ -348,7 +355,7 @@ public:
 		for (int t = 0; t < dp.size() - 1; t++) {
 			for (int x = 0; x < dp[t].size(); x++) {
 				for (auto v: dp[t][x]) {
-					if (v != 0 && 0 <= x + v && x + v < X) {
+					if (0 <= x + v && x + v < X) {
 						dp[t + 1][x + v].emplace(v);
 					}
 
@@ -390,14 +397,19 @@ public:
 		bool minus = x < 0;
 		if (minus) {
 			x *= -1;
-			v0 *= -1; // ??
+			v0 *= -1;
 		}
 
+		cerr << "t,x=" << t << " " << x << endl;
 		auto vs = vector(dp[t][x].begin(), dp[t][x].end());
 		if (minus) {
 			for (auto &v: vs) {
 				v *= -1;
 			}
+		}
+
+		for (auto &v: vs) {
+			v += v0;
 		}
 
 		return vs;
@@ -466,18 +478,51 @@ public:
 		}
 	}
 
-	void Test1d(int t, int prev_x, int prev_v, int new_x, int new_v) {
-		int x = prev_x;
-		int v = prev_v;
+	void TestGetAcc1d() {
+		auto test_cases = vector<tuple<int, int, int, int, int>> {
+			{1, 0, 0, 1, 1},
+			{10, 0, 0, 10, 0},
+			{10, 0, 0, -10, 0},
+			{10, 0, 0, 10, 2},
+			{10, 0, 0, 0, -2},
+		};
 
-		auto moves = GetAcc1d(t, new_x, new_v);
-		if (!moves.empty()) {
+		for (const auto& [t, x0, v0, x1, v1] : test_cases) {
+			auto moves = GetAcc1d(t, x1, v1);
+			assert(!moves.empty());
+
+			auto v = v0;
+			auto x = x0;
 			for (auto a: moves) {
 				v += a;
 				x += v;
 			}
-			assert(x == new_x);
-			assert(v == new_v);
+
+			assert(x == x1);
+			assert(v == v1);
+		}
+	}
+
+	void TestGetVel1d() {
+		auto test_cases = vector<tuple<int, int, int, int, int>> {
+			{1, 0, 0, 1, 1},
+			{10, 0, 0, 55, 10},
+			{10, 10, 0, 65, 10},
+			{1, -1, 1, 0, 1},
+			{1, 1, -1, 0, -1},
+			{1, 1, -1, 1, 0},
+		};
+
+		for (const auto& [t, x0, v0, x1, v1] : test_cases) {
+			auto vs = GetVel1d(t, x0, v0, x1);
+			mm_assert(!vs.empty());
+			cerr << "vs=";
+			for (auto& v : vs) {
+				cerr << v << " ";
+			}
+			cerr << endl;
+			cerr << "v1=" << v1 << endl;
+			mm_assert(find(vs.begin(), vs.end(), v1) != vs.end());
 		}
 	}
 
@@ -496,15 +541,9 @@ int main(int argc, char *argv[]) {
 
 	pf.BuildTable();
 	pf.LookTable(1);
-	// pf.LookTable(2);
 
-	pf.GetAcc1d(1, 1, 1);
-	pf.GetAcc1d(2, 2, 1);
-	pf.Test1d(1, 0, 0, 1, 1);
-	pf.Test1d(10, 0, 0, 10, 0);
-	pf.Test1d(10, 0, 0, -10, 0);
-	pf.Test1d(10, 0, 0, 10, 2);
-	pf.Test1d(10, 0, 0, 0, -2);
+	pf.TestGetAcc1d();
+	pf.TestGetVel1d();
 
 	exit(0);
 
