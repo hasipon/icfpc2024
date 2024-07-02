@@ -11,8 +11,7 @@
 #include <thread>
 #include <vector>
 #include <cstdlib>
-
-#define USE_MUTEX 0
+#include <random>
 
 using namespace std;
 using namespace std::chrono;
@@ -63,8 +62,8 @@ Int gcd(Int a, Int b){
 }
 
 double abs(pair<Int, Int> a) {
-	return max(abs(a.first), abs(a.second));
-	// return sqrt(a.first * a.first + a.second * a.second);
+	// return max(abs(a.first), abs(a.second));
+	return sqrt(a.first * a.first + a.second * a.second);
 }
 
 template <typename T> class Ranking {
@@ -154,22 +153,9 @@ public:
 		ranking_.resize(maxTurn+ 1);
 		bests_.resize(maxTurn);
 
-#if USE_MUTEX
 		mutex_.resize(maxTurn + 1);
 		for (auto& m : mutex_) {
 			m = std::make_unique<std::mutex>();
-		}
-#endif
-
-		auto_target_sort_= auto_target;
-		if (auto_target_sort_) {
-#if USE_MUTEX
-			std::lock_guard lock(g_mutex_);
-#endif
-			fixed_target_index_ = 0;
-			sort(stage_data_.begin(), stage_data_.end(), [](auto& a, auto& b) {
-				return abs(a) < abs(b);
-			});
 		}
 
 		SearchNode node;
@@ -179,6 +165,10 @@ public:
 		node.py = 0;
 		node.vx = 0;
 		node.vy = 0;
+
+		while (stage_data_[node.next_index].first == node.px && stage_data_[node.next_index].second == node.py) {
+			node.next_index++;
+		}
 		ranking_[0].push(node);
 	}
 
@@ -235,9 +225,7 @@ private:
 				}
 
 				{
-#if USE_MUTEX
 					std::lock_guard lock(*mutex_[depth]);
-#endif
 					auto& prev = ranking_[depth];
 					if (prev.empty()) {
 						continue;
@@ -262,23 +250,14 @@ private:
 					updated = true;
 				}
 
-				if (depth % 1000 == 0) {
-					cerr << "depth:" << depth << endl;
-					cerr << "ranking_size:" << ranking_[depth].size() << endl;
-				}
-
 				for (int dir = 0; dir < 9; dir++) {
 					const auto [npx, npy, nvx, nvy, nni] = Step(node.px, node.py, node.vx, node.vy, node.next_index, dir);
 
 					{
-#if USE_MUTEX
 						std::lock_guard lock(*mutex_[depth]);
-#endif
 						auto& best = bests_[depth];
 						if (best.next_index < nni) {
-							if (depth + 1 == bests_.size()) {
-								cerr << "nni:" << nni << endl;
-							}
+							// if (depth + 1 == bests_.size()) { cerr << "nni:" << nni << endl; }
 							best.next_index = nni;
 							best.px = npx;
 							best.py = npy;
@@ -288,23 +267,9 @@ private:
 						}
 					}
 
-					if (auto_target_sort_ && nni != node.next_index) {
-						std::lock_guard g_lock(g_mutex_);
-						if (fixed_target_index_ < nni) {
-							fixed_target_index_ = nni;
-							sort(stage_data_.begin() + fixed_target_index_, stage_data_.end(), [&](auto &a, auto &b) {
-								auto aa = make_pair<Int, Int>(a.first - node.px - node.vx, a.second - node.py - node.vy);
-								auto bb = make_pair<Int, Int>(b.first - node.px - node.vx, b.second - node.py - node.vy);
-								return abs(aa) < abs(bb);
-							});
-						}
-					}
-
 					tmp_node.score = EvalFunc(npx, npy, nvx, nvy, nni);
 					{
-#if USE_MUTEX
 						std::lock_guard lock(*mutex_[depth + 1]);
-#endif
 						if (ranking_[depth + 1].is_rankin(tmp_node)) {
 							tmp_node.next_index = nni;
 							tmp_node.px = npx;
@@ -350,18 +315,175 @@ private:
 		ret = ret * 573292817ULL + vy;
 		return ret;
 	}
-
 	int base_turn_ = 0;
-	bool auto_target_sort_ = false;
-	int fixed_target_index_  = 0;
 	StageData stage_data_;
 	std::array<uint64_t, 1 << 16> weak_hash_;
 	std::vector<SearchNode> bests_;
 	std::vector<Ranking<SearchNode>> ranking_;
-#if USE_MUTEX
 	std::vector<std::unique_ptr<std::mutex>> mutex_;
-#endif
 	std::mutex g_mutex_;
+};
+
+
+class PathFinder {
+	// やりたいこと
+	// クエリ1: p0, v0 から p1 に移動するときの v1の候補を返却する
+	//   探索時に使用する.
+	// クエリ2: p0, v0 から p1, v1 に移動する a の配列を返却する
+	//   経路復元時に使用する.
+
+	static const int T = 150;
+	static const int X = 10000;
+public:
+	// テーブル生成
+	// dp[t][x] = set(v)
+	// 1ターン後にxに到達する時のv (存在しない場合は空)
+	void BuildTable() {
+		dp.resize(T);
+		for (int t = 0; t < T; t++) {
+			dp[t].resize(X);
+		}
+
+		dp[0][0].emplace(0);
+		for (int t = 0; t < dp.size() - 1; t++) {
+			for (int x = 0; x < dp[t].size(); x++) {
+				for (auto v: dp[t][x]) {
+					if (v != 0 && 0 <= x + v && x + v < X) {
+						dp[t + 1][x + v].emplace(v);
+					}
+
+					if (0 <= x + v + 1 && x + v + 1 < X) {
+						dp[t + 1][x + v + 1].emplace(v + 1);
+					}
+
+					if (0 <= x + v - 1 && x + v - 1 < X) {
+						dp[t + 1][x + v - 1].emplace(v - 1);
+					}
+				}
+			}
+		}
+	}
+
+	// 1次元 移動可能判定
+	// 初期状態: t, x, v = 0, 0, 0
+	// 終了状態: t, x, v = t, x, v
+	bool CanMove1d(int t, int x, int v) const {
+		if (t == 0) {
+			if (x == 0 && v == 0) return true;
+			return false;
+		}
+
+		if (x < 0) {
+			x *= -1;
+			v *= -1;
+		}
+
+		return dp[t][x].find(v) != dp[t][x].end();
+	}
+
+	// 1次元 到達時の速度の列を返す
+	// 初期状態: t, x, v = 0, x0, v0
+	// 終了状態: t, x, v = t, x1, v1
+	// v1の配列を返す
+	vector<int> GetVel1d(int t, int x0, int v0, int x1) const {
+		int x = x1 - (x0 + v0 * t);
+		bool minus = x < 0;
+		if (minus) {
+			x *= -1;
+			v0 *= -1; // ??
+		}
+
+		auto vs = vector(dp[t][x].begin(), dp[t][x].end());
+		if (minus) {
+			for (auto &v: vs) {
+				v *= -1;
+			}
+		}
+
+		return vs;
+	}
+
+	// 1次元 加速度の列を返す
+	// 初期状態: t, x, v = 0, 0, 0
+	// 終了状態: t, x, v = t, x, v
+	vector<char> GetAcc1d(int t, int x, int v) const {
+		cerr << "Query; x, t, v = " << x << " " << t << " " << v << " " << endl;
+		if (t == 0) {
+			if (x == 0 && v == 0) return {0};
+			return {};
+		}
+
+		bool minus = x < 0;
+		if (minus) {
+			x *= -1;
+			v *= -1;
+		}
+
+		if (dp[t][x].find(v) == dp[t][x].end()) {
+			return {};
+		}
+
+		vector<char> moves;
+
+		while (t--) {
+			int aa = -1;
+			int xx = -1;
+
+			for (int a = -1; a <= 1; a++) {
+				xx = x - v;
+				// cerr << "xx=" << xx << " a=" << a << " v-a=" << v-a << endl;
+				if (0 <= xx && xx < X) {
+					if (dp[t][xx].find(v - a) != dp[t][xx].end()) {
+						// cerr << "found: a=" << a << " v=" << v - a << endl;
+						aa = a;
+						break;
+					}
+				}
+			}
+
+			if (xx == -1) {
+				cerr << "not found" << endl;
+				throw 1;
+			}
+
+			moves.emplace_back(minus ? -aa : aa);
+			x = xx;
+			v -= aa;
+		}
+
+		reverse(moves.begin(), moves.end());
+		cerr << "Ans: "; for (auto c: moves) { cerr << int(c) << " "; } cerr << endl;
+		return moves;
+	}
+
+	void LookTable(int x) {
+		if (!(0 <= x && x < dp.size())) return;
+
+		for (int t = 0; t < dp.size(); t++) {
+			for (auto v: dp[t][x]) {
+				cerr << "x, t, v = " << x << " " << t << " " << v << " " << endl;
+			}
+		}
+	}
+
+	void Test1d(int t, int prev_x, int prev_v, int new_x, int new_v) {
+		int x = prev_x;
+		int v = prev_v;
+
+		auto moves = GetAcc1d(t, new_x, new_v);
+		if (!moves.empty()) {
+			for (auto a: moves) {
+				v += a;
+				x += v;
+			}
+			assert(x == new_x);
+			assert(v == new_v);
+		}
+	}
+
+private:
+	// table[t][x] = v;
+	vector<vector<set<int> > > dp;
 };
 
 int main(int argc, char *argv[]) {
@@ -370,69 +492,60 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+	PathFinder pf;
+
+	pf.BuildTable();
+	pf.LookTable(1);
+	// pf.LookTable(2);
+
+	pf.GetAcc1d(1, 1, 1);
+	pf.GetAcc1d(2, 2, 1);
+	pf.Test1d(1, 0, 0, 1, 1);
+	pf.Test1d(10, 0, 0, 10, 0);
+	pf.Test1d(10, 0, 0, -10, 0);
+	pf.Test1d(10, 0, 0, 10, 2);
+	pf.Test1d(10, 0, 0, 0, -2);
+
+	exit(0);
+
     ifstream ifs(argv[1]);
     auto vg = input(ifs);
     ifs.close();
+    cerr << "vg.size()=" << vg.size() << endl;
 
-	auto sol_file = envStr("TSP_SOL", "");
-    if (!sol_file.empty()) {
-	    ifstream fs(sol_file);
-    	if (fs.is_open()) {
-		    int n, k;
-		    fs >> n;
-		    fs >> k;
-		    if (k != 0) {
-			    cerr << "tsp sol: invalid origin" << endl;
-			    exit(1);
+    ChokudaiSearch cs(vg, envInt("AUTO", 0));
+    cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 1000));
+    auto bests = cs.GetBests();
+    vector<int> moves;
+    for (const auto &best: bests) {
+	    if (best.next_index == vg.size()) {
+		    for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
+			    moves.push_back(ptr->dir + 1);
 		    }
-
-		    auto org = vg;
-    		vg.resize(n);
-		    for (int i = 0; i < n; i++) {
-			    fs >> k;
-			    vg[i] = org[k - 1];
-		    }
-
-		    cerr << "loaded:" << sol_file << endl;
-    	} else {
-		    cerr << "sol file not found:" << sol_file << endl;
-    	}
+		    break;
+	    }
     }
 
-    cerr << "vg.size()=" << vg.size() << endl;
-	ChokudaiSearch cs(vg, false);
-	cs.Run(envInt("MAXTURN", 1000), envInt("TIMEOUT", 60 * 1000));
-	auto bests = cs.GetBests();
-	vector<int> moves;
-	for (const auto& best : bests) {
-		if (best.next_index == vg.size()) {
-			for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
-				moves.push_back(ptr->dir + 1);
-			}
-			break;
-		}
-	}
-
-	if (!moves.empty()) {
-		cerr << "score: " << moves.size() << endl;
-		reverse(moves.begin(), moves.end());
-		for (auto dir: moves) {
-			cout << dir;
-		}
-		cout << endl;
-	} else {
-		cerr << "Not found" << endl;
-		if (!bests.empty()) {
-			auto &best = bests.back();
-			cerr << "next_index=" << best.next_index << " score=" << best.score << endl;
-			for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
-				moves.push_back(ptr->dir + 1);
-			}
-			reverse(moves.begin(), moves.end());
-			for (auto dir: moves) {
-				cerr << dir;
-			}
-			cerr << endl;
-		}
-	}
+    if (!moves.empty()) {
+	    cerr << "score: " << moves.size() << endl;
+	    reverse(moves.begin(), moves.end());
+	    for (auto dir: moves) {
+		    cout << dir;
+	    }
+	    cout << endl;
+    } else {
+	    cerr << "Not found" << endl;
+	    if (!bests.empty()) {
+		    auto &best = bests.back();
+		    cerr << "next_index=" << best.next_index << " score=" << best.score << endl;
+		    for (auto ptr = best.dir_list; ptr != nullptr; ptr = ptr->parent) {
+			    moves.push_back(ptr->dir + 1);
+		    }
+		    reverse(moves.begin(), moves.end());
+		    for (auto dir: moves) {
+			    cerr << dir;
+		    }
+		    cerr << endl;
+	    }
+    }
 }
