@@ -85,6 +85,12 @@ class Parser:
 			v2 = self.main()
 			#func(f)
 			return ("if", f, v1, v2)
+		elif self.a[self.pos] == 'T':
+			self.pos += 1
+			return "true"
+		elif self.a[self.pos] == 'F':
+			self.pos += 1
+			return "false"
 		else:
 			print('>>>', self.a[self.pos])
 
